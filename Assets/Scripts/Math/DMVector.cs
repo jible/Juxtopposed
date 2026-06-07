@@ -10,7 +10,7 @@ public struct DMVector
     public DM64 y;
 
     // Constructors
-
+    public static DMVector zero = new DMVector(0, 0);
     public DMVector(DM64 _x, DM64 _y)
     {
         x = _x.copy();
@@ -94,6 +94,10 @@ public struct DMVector
     //}
 
 
+    public Vector3 ToVector3(float z = 0)
+    {
+        return new Vector3(x.ToFloat(), y.ToFloat(), z);
+    }
 
     public DM64 GetMagnitude()
     {
