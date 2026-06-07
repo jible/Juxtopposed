@@ -3,7 +3,7 @@ using UnityEngine;
 [RequireComponent(typeof(DeterministicTransform))]
 public class PhysicsObject : MonoBehaviour
 {
-    [SerializeReference]
+    [SerializeReference, SubclassSelector]
     public Shape shape = null;
 
 

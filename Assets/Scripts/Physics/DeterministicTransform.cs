@@ -6,7 +6,7 @@ public class DeterministicTransform : MonoBehaviour
     public DMVector position;
     
 
-    [SerializeField]
+    [SerializeField, HideInInspector]
     public DMVector globalPosition;
 
 }

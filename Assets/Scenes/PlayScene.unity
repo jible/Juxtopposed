@@ -551,18 +551,18 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::PhysicsObject
   shape:
-    rid: 5606500113382899812
+    rid: 5606500113382899997
   references:
     version: 2
     RefIds:
-    - rid: 5606500113382899812
+    - rid: 5606500113382899997
       type: {class: Square, ns: , asm: Assembly-CSharp}
       data:
         size:
           x:
-            raw: 0
+            raw: 14645838848
           y:
-            raw: 0
+            raw: 28346783744
 --- !u!114 &1726862237
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -577,12 +577,12 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::DeterministicTransform
   position:
     x:
-      raw: 0
+      raw: 858993472
     y:
-      raw: 0
+      raw: -4552665088
   globalPosition:
     x:
-      raw: 0
+      raw: 11123964928
     y:
       raw: 0
 --- !u!1660057539 &9223372036854775807
