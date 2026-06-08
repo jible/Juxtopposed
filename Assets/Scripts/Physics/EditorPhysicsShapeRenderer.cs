@@ -17,6 +17,7 @@ public class EditorPhysicsShapeRenderer : MonoBehaviour
 
     public void Start()
     {
+        Instance = this;
         GetPhysicsObjects();
         
     }
@@ -30,12 +31,14 @@ public class EditorPhysicsShapeRenderer : MonoBehaviour
 
     public void RegisterObject(PhysicsObject newObject)
     {
+        Debug.Log("register! b");
         if (allPhysicsObjects.Contains(newObject))
         {
             return;
         }
+        Debug.Log("register! c");
 
-        allPhysicsObjects.Append(newObject);
+        allPhysicsObjects.Add(newObject);
     }
 
     public void OnDrawGizmos()
