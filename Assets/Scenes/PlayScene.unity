@@ -119,6 +119,88 @@ NavMeshSettings:
     debug:
       m_Flags: 0
   m_NavMeshData: {fileID: 0}
+--- !u!1 &51343315
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 51343316}
+  - component: {fileID: 51343318}
+  - component: {fileID: 51343317}
+  m_Layer: 0
+  m_Name: GameObject
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &51343316
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 51343315}
+  serializedVersion: 2
+  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
+  m_LocalPosition: {x: 2.01465, y: 0, z: -8.28538}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 1010068963}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &51343317
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 51343315}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d009800fbf2881c459875c5571f2c7f1, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::PhysicsObject
+  shape:
+    rid: 5606500134529007714
+  hasCollision: 1
+  isTrigger: 0
+  references:
+    version: 2
+    RefIds:
+    - rid: 5606500134529007714
+      type: {class: Square, ns: , asm: Assembly-CSharp}
+      data:
+        size:
+          x:
+            raw: 15590731776
+          y:
+            raw: 20057497600
+--- !u!114 &51343318
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 51343315}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 42d5c75c595c7c744b22d36cb56c6acb, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::DeterministicTransform
+  position:
+    x:
+      raw: -32126355456
+    y:
+      raw: 4037269248
+  globalPosition:
+    x:
+      raw: 0
+    y:
+      raw: 0
 --- !u!1 &158650150
 GameObject:
   m_ObjectHideFlags: 0
@@ -246,86 +328,6 @@ MonoBehaviour:
   m_ShadowLayerMask: 1
   m_RenderingLayers: 1
   m_ShadowRenderingLayers: 1
---- !u!1 &290823242
-GameObject:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
-  m_Component:
-  - component: {fileID: 290823243}
-  - component: {fileID: 290823245}
-  - component: {fileID: 290823244}
-  m_Layer: 0
-  m_Name: PhysicsObject
-  m_TagString: Untagged
-  m_Icon: {fileID: 0}
-  m_NavMeshLayer: 0
-  m_StaticEditorFlags: 0
-  m_IsActive: 1
---- !u!4 &290823243
-Transform:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 290823242}
-  serializedVersion: 2
-  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 1, y: 1, z: 1}
-  m_ConstrainProportionsScale: 0
-  m_Children: []
-  m_Father: {fileID: 1010068963}
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!114 &290823244
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 290823242}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: d009800fbf2881c459875c5571f2c7f1, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::PhysicsObject
-  shape:
-    rid: 5606500134529007617
-  references:
-    version: 2
-    RefIds:
-    - rid: 5606500134529007617
-      type: {class: Square, ns: , asm: Assembly-CSharp}
-      data:
-        size:
-          x:
-            raw: 23450521600
-          y:
-            raw: 18339510272
---- !u!114 &290823245
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 290823242}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 42d5c75c595c7c744b22d36cb56c6acb, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::DeterministicTransform
-  position:
-    x:
-      raw: 23235772416
-    y:
-      raw: 0
-  globalPosition:
-    x:
-      raw: 11123964928
-    y:
-      raw: 0
 --- !u!1 &538993524
 GameObject:
   m_ObjectHideFlags: 0
@@ -537,7 +539,8 @@ Transform:
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
-  - {fileID: 290823243}
+  - {fileID: 2136164211}
+  - {fileID: 51343316}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &1545915558
@@ -581,10 +584,92 @@ MonoBehaviour:
   m_GameObject: {fileID: 1545915558}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 3fc5065a64c105e44a3ac09553bb201b, type: 3}
+  m_Script: {fileID: 11500000, guid: 88ca7ab4c592d9e4ea1aab555960bd30, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::EditorPhysicsShapeRenderer
   renderZAxis: 0
+--- !u!1 &2136164210
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 2136164211}
+  - component: {fileID: 2136164213}
+  - component: {fileID: 2136164212}
+  m_Layer: 0
+  m_Name: GameObject
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &2136164211
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2136164210}
+  serializedVersion: 2
+  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
+  m_LocalPosition: {x: 2.01465, y: 0, z: -8.28538}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 1010068963}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &2136164212
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2136164210}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d009800fbf2881c459875c5571f2c7f1, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::PhysicsObject
+  shape:
+    rid: 5606500134529007714
+  hasCollision: 1
+  isTrigger: 0
+  references:
+    version: 2
+    RefIds:
+    - rid: 5606500134529007714
+      type: {class: Square, ns: , asm: Assembly-CSharp}
+      data:
+        size:
+          x:
+            raw: 13700945920
+          y:
+            raw: 17093969920
+--- !u!114 &2136164213
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2136164210}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 42d5c75c595c7c744b22d36cb56c6acb, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::DeterministicTransform
+  position:
+    x:
+      raw: -515396064
+    y:
+      raw: 1331439872
+  globalPosition:
+    x:
+      raw: 0
+    y:
+      raw: 0
 --- !u!1660057539 &9223372036854775807
 SceneRoots:
   m_ObjectHideFlags: 0

@@ -6,14 +6,22 @@ public class PhysicsObject : MonoBehaviour
 {
     [SerializeReference, SubclassSelector]
     public Shape shape;
+    public int mask;
+    public int layer;
+    public bool isActive = true;
+    public ObjectType objectType;
 
-
-    public void OnEnable()
+    public enum ObjectType
     {
-        Debug.Log("register! a");
-        if (EditorPhysicsShapeRenderer.Instance != null)
+        TriggerBox,
+        CollisionObject
+    }
+
+    public void Start()
+    {
+        if (physicsShapeRenderer.Instance != null)
         {
-            EditorPhysicsShapeRenderer.Instance.RegisterObject(this);
+            physicsShapeRenderer.Instance.RegisterObject(this);
         }
     }
 }

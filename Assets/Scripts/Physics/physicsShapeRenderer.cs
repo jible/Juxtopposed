@@ -4,10 +4,9 @@ using System.Linq;
 using UnityEngine;
 
 [ExecuteAlways]
-public class EditorPhysicsShapeRenderer : MonoBehaviour
+public class physicsShapeRenderer : MonoBehaviour
 {
-    public static EditorPhysicsShapeRenderer Instance { get; private set; }
-    private bool doRun = false;
+    public static physicsShapeRenderer Instance { get; private set; }
     private List<Shape> shapes = new List<Shape>();
     private bool CollectionDirty = true;
     private List< PhysicsObject>allPhysicsObjects = new();
@@ -31,12 +30,10 @@ public class EditorPhysicsShapeRenderer : MonoBehaviour
 
     public void RegisterObject(PhysicsObject newObject)
     {
-        Debug.Log("register! b");
         if (allPhysicsObjects.Contains(newObject))
         {
             return;
         }
-        Debug.Log("register! c");
 
         allPhysicsObjects.Add(newObject);
     }
