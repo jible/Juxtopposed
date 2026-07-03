@@ -194,17 +194,17 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 42d5c75c595c7c744b22d36cb56c6acb, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::DeterministicTransform
-  globalPositionIsDirty: 1
+  globalPositionIsDirty: 0
   _position:
     x:
-      raw: 0
+      raw: -300647712
     y:
-      raw: 0
+      raw: 17609365504
   _globalPosition:
     x:
-      raw: 0
+      raw: -300647712
     y:
-      raw: 0
+      raw: 17609365504
 --- !u!1 &158650150
 GameObject:
   m_ObjectHideFlags: 0
@@ -666,17 +666,17 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 42d5c75c595c7c744b22d36cb56c6acb, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::DeterministicTransform
-  globalPositionIsDirty: 1
+  globalPositionIsDirty: 0
   _position:
     x:
-      raw: 9792525312
+      raw: 14130442240
     y:
-      raw: 0
+      raw: -15633681408
   _globalPosition:
     x:
-      raw: 0
+      raw: 13829794528
     y:
-      raw: 0
+      raw: 1975684096
 --- !u!1 &2136164210
 GameObject:
   m_ObjectHideFlags: 0
@@ -751,7 +751,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 42d5c75c595c7c744b22d36cb56c6acb, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::DeterministicTransform
-  globalPositionIsDirty: 1
+  globalPositionIsDirty: 0
   _position:
     x:
       raw: -17652316160
@@ -759,9 +759,9 @@ MonoBehaviour:
       raw: 1245540480
   _globalPosition:
     x:
-      raw: 0
+      raw: -17652316160
     y:
-      raw: 0
+      raw: 1245540480
 --- !u!1660057539 &9223372036854775807
 SceneRoots:
   m_ObjectHideFlags: 0
