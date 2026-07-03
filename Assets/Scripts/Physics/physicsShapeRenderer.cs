@@ -8,7 +8,6 @@ public class physicsShapeRenderer : MonoBehaviour
 {
     public static physicsShapeRenderer Instance { get; private set; }
     private List<Shape> shapes = new List<Shape>();
-    private bool CollectionDirty = true;
     private List< PhysicsObject>allPhysicsObjects = new();
 
     public float renderZAxis = 0;
@@ -64,6 +63,6 @@ public class physicsShapeRenderer : MonoBehaviour
     private void RenderSquare(PhysicsObject owner,Square s)
     {
         DeterministicTransform transform = owner.GetComponent<DeterministicTransform>();
-        Gizmos.DrawCube(transform.position.ToVector3(renderZAxis), s.size.ToVector3(renderThickness));
+        Gizmos.DrawCube(transform.globalPosition.ToVector3(renderZAxis), s.size.ToVector3(renderThickness));
     }
 }
