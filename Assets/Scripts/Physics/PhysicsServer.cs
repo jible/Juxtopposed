@@ -82,10 +82,15 @@ public class PhysicsServer : MonoBehaviour
             objectToHashCells
         );
 
-
+        var toRemove = new List<PhysicsObject>();
         var interacted = new HashSet<(PhysicsObject, PhysicsObject)>();
         foreach (var entityA in AllEntities)
         {
+            if (entityA == null)
+            {
+                toRemove.Add(entityA);
+                continue;
+            }
             // itterate through each object it is overlapping
             if ( !entityA.isActive || entityA.shape == null)
             {
@@ -107,6 +112,10 @@ public class PhysicsServer : MonoBehaviour
 
 
             }
+        }
+        foreach (var entity in toRemove)
+        {
+            AllEntities.Remove(entity);
         }
     }
 
