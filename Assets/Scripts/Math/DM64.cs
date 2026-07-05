@@ -133,6 +133,7 @@ public struct DM64
         return f;
     }
 
+
     public static DM64 operator /(DM64 a, DM64 b)
     {
         if (b.raw == 0)

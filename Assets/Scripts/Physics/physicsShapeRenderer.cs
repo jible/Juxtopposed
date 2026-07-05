@@ -8,7 +8,6 @@ public class physicsShapeRenderer : MonoBehaviour
 {
     public static physicsShapeRenderer Instance { get; private set; }
     private List<Shape> shapes = new List<Shape>();
-    private List< PhysicsObject>allPhysicsObjects = new();
 
     public float renderZAxis = 0;
     float renderThickness = .5f;
@@ -16,35 +15,15 @@ public class physicsShapeRenderer : MonoBehaviour
     public void Start()
     {
         Instance = this;
-        GetPhysicsObjects();
         
-    }
-
-
-    private void GetPhysicsObjects()
-    {
-        allPhysicsObjects = new (Object.FindObjectsByType<PhysicsObject>(FindObjectsSortMode.None) );
-    }
-
-
-    public void RegisterObject(PhysicsObject newObject)
-    {
-        if (allPhysicsObjects.Contains(newObject))
-        {
-            return;
-        }
-
-        allPhysicsObjects.Add(newObject);
     }
 
     public void OnDrawGizmos()
     {
-        List<PhysicsObject> toRemove = new List<PhysicsObject>();
-        foreach (var i in allPhysicsObjects)
+        foreach (var i in PhysicsServer.Instance.AllEntities)
         {
             if (i == null)
             {
-                toRemove.Add(i);
                 continue;
             }
 
