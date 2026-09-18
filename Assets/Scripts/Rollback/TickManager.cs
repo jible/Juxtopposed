@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using System.Linq;
 using Unity.VisualScripting;
 using UnityEngine;
 
@@ -31,18 +32,32 @@ public class TickManager : MonoBehaviour
     static TickManager Instance;
     private PhysicsServer physicsServer;
          
-    private PhysicsShapeRenderer physicsShapeRenderer;
     public void _Ready()
     {
         Instance = this;
-        tickables = GetAllTickables(gameObject);
+        tickables = GetAllTickables(transform);
         physicsServer = GetComponent<PhysicsServer>();
-        physicsShapeRenderer = GetComponent<PhysicsShapeRenderer>();
     }
     
-    private ITickable[] GetAllTickables(GameObject parent)
+    private ITickable[] GetAllTickables(Transform parent)
     {
-        return parent.GetComponentsInChildren<ITickable>();
+        Queue<Transform> queue = new();
+        List<ITickable> tickables = new();
+        queue.Enqueue(parent);
+        while (queue.Count > 0)
+        {
+            var current = queue.Dequeue();
+            var tickable = current.GetComponent<ITickable>();
+            if (tickable != null)
+            {
+                tickables.Append(tickable);
+            }
+            foreach (Transform child in current.transform)
+            {
+                queue.Enqueue(child);
+            }
+        }
+        return tickables.ToArray();
     }
 
     public void Tick()
