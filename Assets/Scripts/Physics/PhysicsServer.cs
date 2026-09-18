@@ -8,7 +8,6 @@ using UnityEngine.Animations;
 public class PhysicsServer : MonoBehaviour
 {
     public static PhysicsServer Instance { get; private set; }
-    public List<PhysicsObject> AllEntities = new List<PhysicsObject>();
     public DM64 Epsilon = new(.0001f);
 
     [SerializeField]
@@ -20,24 +19,15 @@ public class PhysicsServer : MonoBehaviour
 
     public void Start()
     {
-        Debug.Log("PhysicsServer Start");
         Instance = this;
+        PhysicsObjectRegistry.Reset();
         if (PhysicsRoot == null)
         {
             throw new System.Exception("PhysicsRoot is not assigned in PhysicsServer.");
         }
-
-        AllEntities.Clear();
-        GetAllEntities(AllEntities, null, true);
     }
 
-    public void RegisterObject(PhysicsObject obj)
-    {
-        if (!AllEntities.Contains(obj))
-        {
-            AllEntities.Add(obj);
-        }
-    }
+
 
     private void GetAllEntities(List<PhysicsObject> output, PhysicsObject parent = null,bool first = false)
     {
@@ -71,8 +61,6 @@ public class PhysicsServer : MonoBehaviour
 
     public void Tick()
     {
-        // Maybe add a check to make sure the game is not running in the editor?
-
         // Spacial Hashing:
         var tileToCells = new Dictionary<Vector2Int, List<PhysicsObject>>();
         var objectToHashCells = new Dictionary<PhysicsObject, List<Vector2Int>>();
@@ -84,14 +72,13 @@ public class PhysicsServer : MonoBehaviour
 
         var toRemove = new List<PhysicsObject>();
         var interacted = new HashSet<(PhysicsObject, PhysicsObject)>();
-        foreach (var entityA in AllEntities)
+        foreach (var entityA in PhysicsObjectRegistry.All)
         {
             if (entityA == null)
             {
-                toRemove.Add(entityA);
                 continue;
             }
-            // itterate through each object it is overlapping
+            // iterate through each object it is overlapping
             if ( !entityA.isActive || entityA.shape == null)
             {
                 continue;
@@ -106,16 +93,8 @@ public class PhysicsServer : MonoBehaviour
                     }
                     interacted.Add((entityA, entityB));
                     CheckForOverlap(entityA, entityB);
-
-
                 }
-
-
             }
-        }
-        foreach (var entity in toRemove)
-        {
-            AllEntities.Remove(entity);
         }
     }
 
@@ -200,7 +179,7 @@ public class PhysicsServer : MonoBehaviour
         Dictionary<Vector2Int, List<PhysicsObject>> tileToCells,
         Dictionary<PhysicsObject, List<Vector2Int>> objectToHashCells)
     {
-        foreach( var entity in AllEntities)
+        foreach( var entity in PhysicsObjectRegistry.All)
         {
             if (!entity.isActive || entity.shape == null)
             {

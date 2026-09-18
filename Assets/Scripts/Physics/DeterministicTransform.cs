@@ -70,7 +70,10 @@ public class DeterministicTransform : MonoBehaviour
         SetDirty();
     }
 
-
+    public void OnTransformParentChanged()
+    {
+        globalPositionIsDirty = true;
+    }
     public void SetDirty (){
         if (globalPositionIsDirty) return;
         globalPositionIsDirty = true;

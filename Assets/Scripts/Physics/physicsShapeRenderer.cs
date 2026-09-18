@@ -20,7 +20,8 @@ public class physicsShapeRenderer : MonoBehaviour
 
     public void OnDrawGizmos()
     {
-        foreach (var i in PhysicsServer.Instance.AllEntities)
+        if (PhysicsServer.Instance == null) return; // physics engine not ready yet
+        foreach (var i in PhysicsObjectRegistry.All)
         {
             if (i == null)
             {

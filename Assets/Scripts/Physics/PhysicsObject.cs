@@ -37,7 +37,7 @@ public class PhysicsObject : MonoBehaviour
     {
         if (physicsShapeRenderer.Instance != null)
         {
-            PhysicsServer.Instance.RegisterObject(this);
+            PhysicsObjectRegistry.Register(this);
         }
     }
 }
