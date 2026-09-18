@@ -70,6 +70,7 @@
     "dotnet.defaultSolution": "Juxtopposed.slnx",
     "cSpell.words": [
         "Behaviour",
-        "Tickable"
+        "Tickable",
+        "Tickables"
     ]
 }

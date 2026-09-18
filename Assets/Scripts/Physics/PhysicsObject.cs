@@ -1,19 +1,23 @@
 using System;
-using System.Collections.Generic;
 using UnityEngine;
-using UnityEngine.EventSystems;
 
 
 [RequireComponent(typeof(DeterministicTransform)), ExecuteAlways]
-public class PhysicsObject : MonoBehaviour
+public class PhysicsObject : SerializableData<bool>
 {
     [SerializeReference, SubclassSelector]
     public Shape shape;
     public int mask;
     public int layer;
-    public bool isActive = true;
     public bool isStatic = false;
     public ObjectType objectType;
+
+    public bool isActive
+    {
+        get => Current;
+        set => Current = value;
+    }
+
     /// <summary>
     /// Emitted when this object has been entered by another object
     /// </summary>
@@ -33,11 +37,14 @@ public class PhysicsObject : MonoBehaviour
         Overlapping?.Invoke(this, other);
     }
 
-    public void Start()
+    protected override void Awake()
     {
-        if (physicsShapeRenderer.Instance != null)
-        {
-            PhysicsObjectRegistry.Register(this);
-        }
+        base.Awake();
+        PhysicsObjectRegistry.Register(this);
+    }
+
+    private void Reset()
+    {
+        Current = true;
     }
 }

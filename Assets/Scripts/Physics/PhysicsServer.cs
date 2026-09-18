@@ -4,6 +4,7 @@ using System.Runtime.ExceptionServices;
 using UnityEngine;
 using UnityEngine.Animations;
 
+[DefaultExecutionOrder(-10000)]
 [ExecuteAlways]
 public class PhysicsServer : MonoBehaviour
 {
@@ -17,47 +18,19 @@ public class PhysicsServer : MonoBehaviour
     public DMVector EditorHashGridSize = new(30);
 
 
-    public void Start()
+    public void Awake()
     {
         Instance = this;
+        // Runs before any PhysicsObject/DeterministicTransform Awake (DefaultExecutionOrder),
+        // so this clear always happens before those objects register themselves.
         PhysicsObjectRegistry.Reset();
+        SerializableDataManager.Reset();
         if (PhysicsRoot == null)
         {
             throw new System.Exception("PhysicsRoot is not assigned in PhysicsServer.");
         }
     }
 
-
-
-    private void GetAllEntities(List<PhysicsObject> output, PhysicsObject parent = null,bool first = false)
-    {
-        if (first)
-        {
-            output.Clear();
-            foreach (var child in PhysicsRoot.GetComponentsInChildren<PhysicsObject>(true))
-            {
-                if (child != parent)
-                {
-                    GetAllEntities(output, child);
-                }
-            }
-            return;
-
-        }
-        if (parent == null)
-        {
-            return;
-        }
-
-        output.Add(parent);
-        foreach (var child in parent.GetComponentsInChildren<PhysicsObject>(true))
-        {
-            if (child != parent)
-            {
-                GetAllEntities(output, child);
-            }
-        }
-    }
 
     public void Tick()
     {

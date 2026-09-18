@@ -4,9 +4,9 @@ using System.Linq;
 using UnityEngine;
 
 [ExecuteAlways]
-public class physicsShapeRenderer : MonoBehaviour
+public class PhysicsShapeRenderer : MonoBehaviour
 {
-    public static physicsShapeRenderer Instance { get; private set; }
+    public static PhysicsShapeRenderer Instance { get; private set; }
     private List<Shape> shapes = new List<Shape>();
 
     public float renderZAxis = 0;

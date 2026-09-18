@@ -3,27 +3,37 @@ using UnityEngine;
 
 public static class SerializableDataManager
 {
-    // List instead of a set cause im trusting that nothing will register twice
     public static List<ISerializable> AllSerializableData = new();
+    private static readonly HashSet<ISerializable> registered = new();
     public static void Register(ISerializable serializable)
     {
+        if (registered.Contains(serializable)) return;
         AllSerializableData.Add(serializable);
+        registered.Add(serializable);
     }
     public static void Reset()
     {
         AllSerializableData.Clear();
+        registered.Clear();
     }
 }
-// Each serializable object 
+// Each serializable object
 public interface ISerializable
 {
     public void Save(int tickIndex);
     public void Load(int tickIndex);
 }
-public class SerializableData<T>: ISerializable where T: unmanaged
+public abstract class SerializableData<T> : MonoBehaviour, ISerializable where T : unmanaged
 {
     public T Current;
-    private T[] values= new T[TickManager._maxTicks] ;
+    private T[] values;
+
+    protected virtual void Awake()
+    {
+        values = new T[TickManager._maxTicks];
+        SerializableDataManager.Register(this);
+    }
+
     public void Save(int tickIndex)
     {
         values[tickIndex] = Current;
@@ -32,8 +42,4 @@ public class SerializableData<T>: ISerializable where T: unmanaged
     {
         Current = values[tickIndex];
     }
-    public SerializableData(){
-        SerializableDataManager.Register(this);
-    }
-
 }

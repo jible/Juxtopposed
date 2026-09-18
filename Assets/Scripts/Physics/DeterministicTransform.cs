@@ -1,26 +1,24 @@
 using UnityEngine;
 using System.Collections.Generic;
-public class DeterministicTransform : MonoBehaviour
+public class DeterministicTransform : SerializableData<DMVector>
 {
     [SerializeField, HideInInspector]
     private bool globalPositionIsDirty = false;
 
-    [SerializeField]
-    private DMVector _position;
     public DMVector position
     {
         get
         {
-            return _position;
+            return Current;
         }
         set
         {
-            _position = value;
+            Current = value;
             SetDirty();
         }
     }
 
-    
+
 
     [SerializeField, HideInInspector]
     private DMVector _globalPosition;
@@ -49,13 +47,13 @@ public class DeterministicTransform : MonoBehaviour
             DeterministicTransform parent = TryGetParent();
             if (parent != null)
             {
-                _position = _globalPosition - parent.globalPosition;
+                Current = _globalPosition - parent.globalPosition;
             }
             else
             {
-                _position = _globalPosition;
+                Current = _globalPosition;
             }
-
+            globalPositionIsDirty = false;
 
             // Set the children as dirty?
             foreach (var child in getChildren())
@@ -86,6 +84,10 @@ public class DeterministicTransform : MonoBehaviour
 // TODO: Maybe cache these objects if the tree does not change (currently to be determinied)
     public DeterministicTransform TryGetParent()
     {
+        if (transform.parent == null)
+        {
+            return null;
+        }
         DeterministicTransform parent = null;
         transform.parent.gameObject.TryGetComponent<DeterministicTransform>(out parent);
         return parent;
