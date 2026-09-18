@@ -47,11 +47,13 @@ public class TickManager : MonoBehaviour
         while (queue.Count > 0)
         {
             var current = queue.Dequeue();
-            var tickable = current.GetComponent<ITickable>();
-            if (tickable != null)
+            // Gets all tickable components in component order
+            var currentTickables = current.GetComponents<ITickable>();
+            foreach (var tickable in currentTickables)
             {
                 tickables.Append(tickable);
             }
+            
             foreach (Transform child in current.transform)
             {
                 queue.Enqueue(child);
@@ -63,7 +65,7 @@ public class TickManager : MonoBehaviour
     public void Tick()
     {
         // Serialize all serializable data
-        SerializableDataManager.SaveAll(CurrentTick);
+        SerializableDataManager.SaveAll(CurrentTickIndex);
 
         // Tick each object
         foreach (var tickable in tickables)
@@ -73,6 +75,7 @@ public class TickManager : MonoBehaviour
 
         // Then tick the physics manager
         physicsServer.Tick();
+        CurrentTick += 1;
     }
 }
 

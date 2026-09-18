@@ -23,5 +23,13 @@ public class PlayManager : MonoBehaviour
             Debug.LogError("Manager Not found");
             return;
         }
+
+
+
+    }
+
+    public void Update()
+    {
+        tickManager.Tick();
     }
 }

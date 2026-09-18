@@ -57,3 +57,19 @@ public class SerializableData<T> : ISerializable where T : unmanaged
     }
 
 }
+
+// This is a serializable data instance that doesn't register so the object can handle loading and saving its data on its own, instead of passing it onto the manager
+public class UnregisteredSerializableData<T> : ISerializable where T : unmanaged
+{
+    public T Value;
+    private readonly T[] values = new T[TickManager._maxTicks];
+    public void Save(int tickIndex)
+    {
+        values[tickIndex] = Value;
+    }
+    public void Load(int tickIndex)
+    {
+        Value = values[tickIndex];
+    }
+
+}
