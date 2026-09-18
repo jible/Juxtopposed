@@ -6,22 +6,16 @@ using UnityEngine;
 [ExecuteAlways]
 public class PhysicsShapeRenderer : MonoBehaviour
 {
-    public static PhysicsShapeRenderer Instance { get; private set; }
     private List<Shape> shapes = new List<Shape>();
 
     public float renderZAxis = 0;
     float renderThickness = .5f;
 
-    public void Start()
-    {
-        Instance = this;
-        
-    }
 
     public void OnDrawGizmos()
     {
         Debug.Log("drawing");
-        if (PhysicsServer.Instance == null) return; // physics engine not ready yet
+
         foreach (var i in PhysicsObjectRegistry.All)
         {
             if (i == null)
@@ -47,3 +41,4 @@ public class PhysicsShapeRenderer : MonoBehaviour
         Gizmos.DrawCube(transform.globalPosition.ToVector3(renderZAxis), s.size.ToVector3(renderThickness));
     }
 }
+//

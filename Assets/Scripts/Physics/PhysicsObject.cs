@@ -44,6 +44,13 @@ public class PhysicsObject : MonoBehaviour
         PhysicsObjectRegistry.Register(this);
     }
 
+    // The registry is static and empty after a script reload, which doesn't call Awake again.
+    // Register is a no-op if already registered.
+    public void OnEnable()
+    {
+        PhysicsObjectRegistry.Register(this);
+    }
+
     private void Reset()
     {
         isActive = true;

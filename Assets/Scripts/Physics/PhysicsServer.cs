@@ -8,7 +8,6 @@ using UnityEngine.Animations;
 [ExecuteAlways]
 public class PhysicsServer : MonoBehaviour
 {
-    public static PhysicsServer Instance { get; private set; }
     public DM64 Epsilon = new(.0001f);
 
 
@@ -16,9 +15,10 @@ public class PhysicsServer : MonoBehaviour
     public DMVector EditorHashGridSize = new(30);
 
 
+    // Awake is not called again after a script reload (domain reload), but statics are wiped.
+
     public void Awake()
     {
-        Instance = this;
         // Runs before any PhysicsObject/DeterministicTransform Awake (DefaultExecutionOrder),
         // so this clear always happens before those objects register themselves.
         PhysicsObjectRegistry.Reset();
