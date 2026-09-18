@@ -1,4 +1,5 @@
 using System;
+using UnityEditor.PackageManager;
 using UnityEngine;
 
 
@@ -11,13 +12,29 @@ public class PhysicsObject : MonoBehaviour
     public int layer;
     public bool isStatic = false;
     public ObjectType objectType;
+    private PhysicsObjectRegistry _physicsObjectRegistry;
+    private PhysicsObjectRegistry physicsObjectRegistry
+    {
+        get
+        {
+            if (_physicsObjectRegistry == null)
+            {
+                _physicsObjectRegistry = GetComponentInParent<PhysicsObjectRegistry>();
+                if (_physicsObjectRegistry == null)
+                {
+                    Debug.LogError("Physics Object could not find physics object registry");
+                }
+            }
+            return _physicsObjectRegistry;
+        }
+    }
 
     [SerializeField]
     private SerializableData<bool> serializedIsActive = new();
     public bool isActive
     {
-        get => serializedIsActive.Current;
-        set => serializedIsActive.Current = value;
+        get => serializedIsActive.Value;
+        set => serializedIsActive.Value = value;
     }
 
     /// <summary>
@@ -41,14 +58,14 @@ public class PhysicsObject : MonoBehaviour
 
     public void Awake()
     {
-        PhysicsObjectRegistry.Register(this);
+        physicsObjectRegistry.Register(this);
     }
 
     // The registry is static and empty after a script reload, which doesn't call Awake again.
     // Register is a no-op if already registered.
     public void OnEnable()
     {
-        PhysicsObjectRegistry.Register(this);
+        physicsObjectRegistry.Register(this);
     }
 
     private void Reset()

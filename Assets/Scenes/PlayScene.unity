@@ -441,6 +441,7 @@ GameObject:
   - component: {fileID: 1010068965}
   - component: {fileID: 1010068964}
   - component: {fileID: 1010068967}
+  - component: {fileID: 1010068968}
   m_Layer: 0
   m_Name: Main
   m_TagString: Untagged
@@ -506,11 +507,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::PhysicsServer
   Epsilon:
     raw: 429496
-  EditorHashGridSize:
-    x:
-      raw: 128849018880
-    y:
-      raw: 0
+  HashGridSize:
+    raw: 128849018880
 --- !u!114 &1010068966
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -536,6 +534,23 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 1430348299c0f37479dac070896b24a7, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::TickManager
+--- !u!114 &1010068968
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1010068961}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: e7e74cb95cfe48f45bee84eaad7ec0d7, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::PhysicsObjectRegistry
+  All:
+  - {fileID: 2136164212}
+  - {fileID: 1793225319}
+  - {fileID: 2136164212}
+  - {fileID: 1793225319}
 --- !u!1 &1065970593
 GameObject:
   m_ObjectHideFlags: 0
@@ -632,7 +647,7 @@ MonoBehaviour:
   isStatic: 0
   objectType: 0
   serializedIsActive:
-    Current: 0
+    Value: 0
   references:
     version: 2
     RefIds:
@@ -656,16 +671,16 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 42d5c75c595c7c744b22d36cb56c6acb, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::DeterministicTransform
-  globalPositionIsDirty: 0
+  globalPositionIsDirty: 1
   serializedPosition:
-    Current:
+    Value:
       x:
-        raw: -18983755776
+        raw: 25168508928
       y:
         raw: 0
   _globalPosition:
     x:
-      raw: -24953760256
+      raw: 1417338880
     y:
       raw: 0
 --- !u!1 &2136164210
@@ -721,7 +736,7 @@ MonoBehaviour:
   isStatic: 0
   objectType: 0
   serializedIsActive:
-    Current: 0
+    Value: 0
   references:
     version: 2
     RefIds:
@@ -745,16 +760,16 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 42d5c75c595c7c744b22d36cb56c6acb, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::DeterministicTransform
-  globalPositionIsDirty: 0
+  globalPositionIsDirty: 1
   serializedPosition:
-    Current:
+    Value:
       x:
-        raw: -5970004480
+        raw: -23751170048
       y:
         raw: 0
   _globalPosition:
     x:
-      raw: -5970004480
+      raw: -23751170048
     y:
       raw: 0
 --- !u!1660057539 &9223372036854775807

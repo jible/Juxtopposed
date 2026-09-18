@@ -2,7 +2,10 @@ using UnityEngine;
 
 [System.Serializable]
 public abstract class Shape{
-    public abstract DMVector GetReach();
+    /// <summary>
+    /// Axis-aligned bounds of this shape, given the global position of its owner.
+    /// </summary>
+    public abstract void GetBounds(DMVector origin, out DMVector min, out DMVector max);
 }
 
 [System.Serializable]
@@ -11,9 +14,12 @@ public class Square : Shape
     [SerializeField]
     public DMVector size;
 
-    public override DMVector GetReach()
+    // The origin is the center of the box.
+    public override void GetBounds(DMVector origin, out DMVector min, out DMVector max)
     {
-        return size /2;
+        DMVector half = size / 2;
+        min = origin - half;
+        max = origin + half;
     }
 }
 
@@ -23,8 +29,11 @@ public class Circle : Shape
     [SerializeField]
     public DM64 radius;
 
-    public override DMVector GetReach()
+    // The origin is the center of the circle.
+    public override void GetBounds(DMVector origin, out DMVector min, out DMVector max)
     {
-        return new DMVector( radius, radius);
+        DMVector reach = new DMVector(radius, radius);
+        min = origin - reach;
+        max = origin + reach;
     }
 }

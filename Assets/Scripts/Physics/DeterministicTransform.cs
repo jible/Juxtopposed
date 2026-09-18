@@ -11,11 +11,11 @@ public class DeterministicTransform : MonoBehaviour
     {
         get
         {
-            return serializedPosition.Current;
+            return serializedPosition.Value;
         }
         set
         {
-            serializedPosition.Current = value;
+            serializedPosition.Value = value;
             SetDirty();
         }
     }
@@ -49,11 +49,11 @@ public class DeterministicTransform : MonoBehaviour
             DeterministicTransform parent = TryGetParent();
             if (parent != null)
             {
-                serializedPosition.Current = _globalPosition - parent.globalPosition;
+                serializedPosition.Value = _globalPosition - parent.globalPosition;
             }
             else
             {
-                serializedPosition.Current = _globalPosition;
+                serializedPosition.Value = _globalPosition;
             }
             globalPositionIsDirty = false;
 

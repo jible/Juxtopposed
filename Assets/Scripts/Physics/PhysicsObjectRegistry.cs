@@ -2,11 +2,20 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 
-public static class PhysicsObjectRegistry
+[ExecuteAlways]
+[DefaultExecutionOrder(-10000)]
+
+public class PhysicsObjectRegistry : MonoBehaviour
 {
-    public static List<PhysicsObject> All = new();
-    public static HashSet<PhysicsObject> Registered = new();
-    public static int Register(PhysicsObject obj)
+    [HideInInspector, System.NonSerialized]
+    public List<PhysicsObject> All = new();
+    [HideInInspector, System.NonSerialized]
+    public HashSet<PhysicsObject> Registered = new();
+    public void Awake()
+    {
+        Reset();
+    }
+    public int Register(PhysicsObject obj)
     {
         if (Registered.Contains(obj)) return All.IndexOf(obj);
         All.Add(obj);
@@ -15,7 +24,7 @@ public static class PhysicsObjectRegistry
     }
 
     
-    public static void Reset()
+    public void Reset()
     {
         Debug.Log("resetting");
         All.Clear();

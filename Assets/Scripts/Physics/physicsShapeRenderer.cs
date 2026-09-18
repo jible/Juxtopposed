@@ -7,14 +7,18 @@ using UnityEngine;
 public class PhysicsShapeRenderer : MonoBehaviour
 {
     private List<Shape> shapes = new List<Shape>();
-
+    private PhysicsObjectRegistry physicsObjectRegistry;
     public float renderZAxis = 0;
     float renderThickness = .5f;
 
+    void Awake()
+    {
+        physicsObjectRegistry = GetComponent<PhysicsObjectRegistry>();
+    }
 
     public void OnDrawGizmos()
     {
-        foreach (var i in PhysicsObjectRegistry.All)
+        foreach (var i in physicsObjectRegistry.All)
         {
             if (i == null)
             {

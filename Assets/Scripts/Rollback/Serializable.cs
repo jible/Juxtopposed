@@ -42,15 +42,15 @@ public interface ISerializable
 [System.Serializable]
 public class SerializableData<T> : ISerializable where T : unmanaged
 {
-    public T Current;
+    public T Value;
     private readonly T[] values = new T[TickManager._maxTicks];
     public void Save(int tickIndex)
     {
-        values[tickIndex] = Current;
+        values[tickIndex] = Value;
     }
     public void Load(int tickIndex)
     {
-        Current = values[tickIndex];
+        Value = values[tickIndex];
     }
     public SerializableData(){
         SerializableDataManager.Register(this);

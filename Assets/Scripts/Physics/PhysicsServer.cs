@@ -1,6 +1,7 @@
 using System.Collections.Generic;
 using System.Runtime.CompilerServices;
 using System.Runtime.ExceptionServices;
+using UnityEditor;
 using UnityEngine;
 using UnityEngine.Animations;
 
@@ -12,8 +13,9 @@ public class PhysicsServer : MonoBehaviour
 
 
     [SerializeField]
-    public DMVector EditorHashGridSize = new(30);
 
+    public DM64 HashGridSize = new(30);
+    private PhysicsObjectRegistry physicsObjectRegistry;
 
     // Awake is not called again after a script reload (domain reload), but statics are wiped.
 
@@ -21,7 +23,7 @@ public class PhysicsServer : MonoBehaviour
     {
         // Runs before any PhysicsObject/DeterministicTransform Awake (DefaultExecutionOrder),
         // so this clear always happens before those objects register themselves.
-        PhysicsObjectRegistry.Reset();
+        physicsObjectRegistry = GetComponent<PhysicsObjectRegistry>();
         SerializableDataManager.Reset();
     }
 
@@ -37,9 +39,8 @@ public class PhysicsServer : MonoBehaviour
             objectToHashCells
         );
 
-        var toRemove = new List<PhysicsObject>();
         var interacted = new HashSet<(PhysicsObject, PhysicsObject)>();
-        foreach (var entityA in PhysicsObjectRegistry.All)
+        foreach (var entityA in physicsObjectRegistry.All)
         {
             if (entityA == null)
             {
@@ -59,6 +60,7 @@ public class PhysicsServer : MonoBehaviour
                         continue;
                     }
                     interacted.Add((entityA, entityB));
+                    interacted.Add((entityB, entityA));
                     CheckForOverlap(entityA, entityB);
                 }
             }
@@ -75,8 +77,8 @@ public class PhysicsServer : MonoBehaviour
          * one or both are triggers and the trigger masks the other object's layer
          */
         bool bothColliders = a.objectType == PhysicsObject.ObjectType.CollisionObject && b.objectType == PhysicsObject.ObjectType.CollisionObject;
-        bool aCollisionB = bothColliders && b.isStatic && (a.mask & b.layer) == 0;
-        bool bCollisionA = bothColliders && a.isStatic && (b.mask & a.layer) == 0;
+        bool aCollisionB = bothColliders && !a.isStatic && b.isStatic && (a.mask & b.layer) != 0;
+        bool bCollisionA = bothColliders && !b.isStatic && a.isStatic && (b.mask & a.layer) != 0;
         bool aTriggeredByB = a.objectType == PhysicsObject.ObjectType.TriggerBox && (a.mask & b.layer) != 0;
         bool bTriggeredByA = b.objectType == PhysicsObject.ObjectType.TriggerBox && (b.mask & a.layer) != 0;
 
@@ -97,9 +99,13 @@ public class PhysicsServer : MonoBehaviour
             {
                 HandleTrigger(b, a);
             }
-            if (aCollisionB || bCollisionA)
+            if (aCollisionB )
             {
                 HandleCollision(a, b);
+            }
+            if (bCollisionA)
+            {
+                HandleCollision(b,a);
             }
         }
     }
@@ -119,21 +125,9 @@ public class PhysicsServer : MonoBehaviour
 
     public void HandleCollision(PhysicsObject a, PhysicsObject b)
     {
-        // If both are static or neither are static, nothing happens
-        if (a.isStatic && b.isStatic)
-        {
-            return;
-        }
-
-
-        // Make a the static one
-        if (!a.isStatic)
-        {
-            (a,b) = (b,a);
-        }
-
         // Resolve the edges of the collision by moving the non-static object out of the static one
-
+        // In this case, A is dynamic, b is static
+        // Thus a will be repelled from b's surface
 
 
 
@@ -146,8 +140,13 @@ public class PhysicsServer : MonoBehaviour
         Dictionary<Vector2Int, List<PhysicsObject>> tileToCells,
         Dictionary<PhysicsObject, List<Vector2Int>> objectToHashCells)
     {
-        foreach( var entity in PhysicsObjectRegistry.All)
+        foreach( var entity in physicsObjectRegistry.All)
         {
+            if (entity == null) // In theory should never happen
+            {
+                Debug.LogError("Encountered null physics object. Was a physics object deleted in play?");
+                continue;
+            } 
             if (!entity.isActive || entity.shape == null)
             {
                 continue;
@@ -170,19 +169,19 @@ public class PhysicsServer : MonoBehaviour
     private List<Vector2Int> GetOverlappingTiles(PhysicsObject entity)
     {
         var output = new List<Vector2Int>();
-        DMVector reach = entity.shape.GetReach();
+        entity.shape.GetBounds(entity.GetComponent<DeterministicTransform>().globalPosition, out DMVector min, out DMVector max);
 
-        DM64 leftMost = (entity.GetComponent<DeterministicTransform>().position.x - reach.x).Floor();
-        DM64 rightMost = (entity.GetComponent<DeterministicTransform>().position.x + reach.x).Floor();
+        // Tiles are keyed by grid cell index, so objects in the same cell always share a key
+        int leftCell = (min.x / HashGridSize).Floor().to_int();
+        int rightCell = (max.x / HashGridSize).Floor().to_int();
+        int downCell = (min.y / HashGridSize).Floor().to_int();
+        int upCell = (max.y / HashGridSize).Floor().to_int();
 
-        DM64 upMost = (entity.GetComponent<DeterministicTransform>().position.y + reach.y).Floor();
-        DM64 downMost = (entity.GetComponent<DeterministicTransform>().position.y - reach.y).Floor();
-
-        for (DM64 x = leftMost; x <= rightMost; x += EditorHashGridSize.x)
+        for (int x = leftCell; x <= rightCell; x++)
         {
-            for (DM64 y = downMost; y <= upMost; y += EditorHashGridSize.y)
+            for (int y = downCell; y <= upCell; y++)
             {
-                output.Add(new Vector2Int(x.to_int(), y.to_int()));
+                output.Add(new Vector2Int(x, y));
             }
         }
 
@@ -219,21 +218,14 @@ public class PhysicsServer : MonoBehaviour
 
         public static bool SquareSquareOverlap(Square a, DeterministicTransform aTransform, Square b, DeterministicTransform bTransform)
         {
-            DM64 AL = aTransform.globalPosition.x;
-            DM64 AR = aTransform.globalPosition.x + a.size.x;
-            DM64 AB = aTransform.globalPosition.y;
-            DM64 AT = aTransform.globalPosition.y + a.size.y;
-
-            DM64 BL = bTransform.globalPosition.x;
-            DM64 BR = bTransform.globalPosition.x + b.size.x;
-            DM64 BB = bTransform.globalPosition.y;
-            DM64 BT = bTransform.globalPosition.y + b.size.y;
+            a.GetBounds(aTransform.globalPosition, out DMVector aMin, out DMVector aMax);
+            b.GetBounds(bTransform.globalPosition, out DMVector bMin, out DMVector bMax);
 
             return (
-                (AL < BR) &&
-                (AR > BL) &&
-                (AB < BT) &&
-                (AT > BB)
+                (aMin.x < bMax.x) &&
+                (aMax.x > bMin.x) &&
+                (aMin.y < bMax.y) &&
+                (aMax.y > bMin.y)
             );
 
         }
