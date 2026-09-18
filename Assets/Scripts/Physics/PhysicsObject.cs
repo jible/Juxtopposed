@@ -3,7 +3,7 @@ using UnityEngine;
 
 
 [RequireComponent(typeof(DeterministicTransform)), ExecuteAlways]
-public class PhysicsObject : SerializableData<bool>
+public class PhysicsObject : MonoBehaviour
 {
     [SerializeReference, SubclassSelector]
     public Shape shape;
@@ -12,10 +12,12 @@ public class PhysicsObject : SerializableData<bool>
     public bool isStatic = false;
     public ObjectType objectType;
 
+    [SerializeField]
+    private SerializableData<bool> serializedIsActive = new();
     public bool isActive
     {
-        get => Current;
-        set => Current = value;
+        get => serializedIsActive.Current;
+        set => serializedIsActive.Current = value;
     }
 
     /// <summary>
@@ -37,14 +39,13 @@ public class PhysicsObject : SerializableData<bool>
         Overlapping?.Invoke(this, other);
     }
 
-    protected override void Awake()
+    public void Awake()
     {
-        base.Awake();
         PhysicsObjectRegistry.Register(this);
     }
 
     private void Reset()
     {
-        Current = true;
+        isActive = true;
     }
 }

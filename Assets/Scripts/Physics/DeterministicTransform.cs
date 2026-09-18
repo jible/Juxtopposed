@@ -1,19 +1,21 @@
 using UnityEngine;
 using System.Collections.Generic;
-public class DeterministicTransform : SerializableData<DMVector>
+public class DeterministicTransform : MonoBehaviour
 {
     [SerializeField, HideInInspector]
     private bool globalPositionIsDirty = false;
 
+    [SerializeField]
+    private SerializableData<DMVector> serializedPosition = new();
     public DMVector position
     {
         get
         {
-            return Current;
+            return serializedPosition.Current;
         }
         set
         {
-            Current = value;
+            serializedPosition.Current = value;
             SetDirty();
         }
     }
@@ -47,11 +49,11 @@ public class DeterministicTransform : SerializableData<DMVector>
             DeterministicTransform parent = TryGetParent();
             if (parent != null)
             {
-                Current = _globalPosition - parent.globalPosition;
+                serializedPosition.Current = _globalPosition - parent.globalPosition;
             }
             else
             {
-                Current = _globalPosition;
+                serializedPosition.Current = _globalPosition;
             }
             globalPositionIsDirty = false;
 

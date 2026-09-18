@@ -1,5 +1,4 @@
 using System.Collections.Generic;
-using UnityEngine;
 
 public static class SerializableDataManager
 {
@@ -23,17 +22,12 @@ public interface ISerializable
     public void Save(int tickIndex);
     public void Load(int tickIndex);
 }
-public abstract class SerializableData<T> : MonoBehaviour, ISerializable where T : unmanaged
+
+[System.Serializable]
+public class SerializableData<T> : ISerializable where T : unmanaged
 {
     public T Current;
-    private T[] values;
-
-    protected virtual void Awake()
-    {
-        values = new T[TickManager._maxTicks];
-        SerializableDataManager.Register(this);
-    }
-
+    private readonly T[] values = new T[TickManager._maxTicks];
     public void Save(int tickIndex)
     {
         values[tickIndex] = Current;
@@ -42,4 +36,8 @@ public abstract class SerializableData<T> : MonoBehaviour, ISerializable where T
     {
         Current = values[tickIndex];
     }
+    public SerializableData(){
+        SerializableDataManager.Register(this);
+    }
+
 }
