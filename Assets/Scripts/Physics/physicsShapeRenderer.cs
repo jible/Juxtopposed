@@ -20,6 +20,7 @@ public class PhysicsShapeRenderer : MonoBehaviour
 
     public void OnDrawGizmos()
     {
+        Debug.Log("drawing");
         if (PhysicsServer.Instance == null) return; // physics engine not ready yet
         foreach (var i in PhysicsObjectRegistry.All)
         {

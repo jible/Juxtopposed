@@ -1,16 +1,27 @@
+using Unity.VisualScripting;
 using UnityEngine;
 
 public class PlayManager : MonoBehaviour
 {
-    // Start is called once before the first execution of Update after the MonoBehaviour is created
-    void Start()
-    {
-         
-    }
+    // This script is in charge of syncing all of the other scripts,
+    // ensuring they are configured in the correct order and waits to call updates
+    // until they are all configured
 
-    // Update is called once per frame
-    void Update()
+    PhysicsServer physicsServer;
+    TickManager tickManager;
+    [SerializeField]
+    StageHolder stageHolder;
+    [SerializeField]
+    CharacterHolder characterHolder;
+    public void Ready()
     {
-        
+        // Establish references
+        physicsServer = GetComponent<PhysicsServer>();
+        tickManager = GetComponent<TickManager>();
+        if (! physicsServer || !tickManager || !characterHolder || !stageHolder)
+        {
+            Debug.LogError("Manager Not found");
+            return;
+        }
     }
 }

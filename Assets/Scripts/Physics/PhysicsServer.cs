@@ -11,8 +11,6 @@ public class PhysicsServer : MonoBehaviour
     public static PhysicsServer Instance { get; private set; }
     public DM64 Epsilon = new(.0001f);
 
-    [SerializeField]
-    public DeterministicTransformManager PhysicsRoot;
 
     [SerializeField]
     public DMVector EditorHashGridSize = new(30);
@@ -25,10 +23,6 @@ public class PhysicsServer : MonoBehaviour
         // so this clear always happens before those objects register themselves.
         PhysicsObjectRegistry.Reset();
         SerializableDataManager.Reset();
-        if (PhysicsRoot == null)
-        {
-            throw new System.Exception("PhysicsRoot is not assigned in PhysicsServer.");
-        }
     }
 
 
@@ -80,9 +74,9 @@ public class PhysicsServer : MonoBehaviour
          * 
          * one or both are triggers and the trigger masks the other object's layer
          */
-        bool bothColiders = a.objectType == PhysicsObject.ObjectType.CollisionObject && b.objectType == PhysicsObject.ObjectType.CollisionObject;
-        bool aCollisionB = bothColiders && b.isStatic && (a.mask & b.layer) == 0;
-        bool bCollisionA = bothColiders && a.isStatic && (b.mask & a.layer) == 0;
+        bool bothColliders = a.objectType == PhysicsObject.ObjectType.CollisionObject && b.objectType == PhysicsObject.ObjectType.CollisionObject;
+        bool aCollisionB = bothColliders && b.isStatic && (a.mask & b.layer) == 0;
+        bool bCollisionA = bothColliders && a.isStatic && (b.mask & a.layer) == 0;
         bool aTriggeredByB = a.objectType == PhysicsObject.ObjectType.TriggerBox && (a.mask & b.layer) != 0;
         bool bTriggeredByA = b.objectType == PhysicsObject.ObjectType.TriggerBox && (b.mask & a.layer) != 0;
 

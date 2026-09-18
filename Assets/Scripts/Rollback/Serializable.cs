@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using Unity.VisualScripting;
 
 public static class SerializableDataManager
 {
@@ -14,6 +15,21 @@ public static class SerializableDataManager
     {
         AllSerializableData.Clear();
         registered.Clear();
+    }
+
+    public static void SaveAll(int tick)
+    {
+        foreach ( ISerializable serializable in AllSerializableData)
+        {
+            serializable.Save(tick);
+        }
+    }
+    public static void LoadAll( int tick)
+    {
+        foreach ( ISerializable serializable in AllSerializableData)
+        {
+            serializable.Load(tick);
+        }
     }
 }
 // Each serializable object
