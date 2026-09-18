@@ -656,7 +656,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 42d5c75c595c7c744b22d36cb56c6acb, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::DeterministicTransform
-  globalPositionIsDirty: 1
+  globalPositionIsDirty: 0
   serializedPosition:
     Current:
       x:
@@ -665,7 +665,7 @@ MonoBehaviour:
         raw: 0
   _globalPosition:
     x:
-      raw: -26027502080
+      raw: -24953760256
     y:
       raw: 0
 --- !u!1 &2136164210
@@ -745,16 +745,16 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 42d5c75c595c7c744b22d36cb56c6acb, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::DeterministicTransform
-  globalPositionIsDirty: 1
+  globalPositionIsDirty: 0
   serializedPosition:
     Current:
       x:
-        raw: -7043746304
+        raw: -5970004480
       y:
         raw: 0
   _globalPosition:
     x:
-      raw: -7043746304
+      raw: -5970004480
     y:
       raw: 0
 --- !u!1660057539 &9223372036854775807

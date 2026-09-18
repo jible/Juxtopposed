@@ -14,8 +14,6 @@ public class PhysicsShapeRenderer : MonoBehaviour
 
     public void OnDrawGizmos()
     {
-        Debug.Log("drawing");
-
         foreach (var i in PhysicsObjectRegistry.All)
         {
             if (i == null)

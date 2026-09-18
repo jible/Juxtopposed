@@ -88,10 +88,10 @@ public struct DMVector
         return false;
     }
 
-    //public override int GetHashCode()
-    //{
-    //    return TickManager.DeterministicCombineHashes(x.GetHashCode(), y.GetHashCode());
-    //}
+    public override int GetHashCode()
+    {
+       return HashCode.Combine(x.GetHashCode(), y.GetHashCode());
+    }
 
 
     public Vector3 ToVector3(float z = 0)

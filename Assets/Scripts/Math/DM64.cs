@@ -255,32 +255,13 @@ public struct DM64
 
     public DM64 Ceil()
     {
-        DM64 o = new();
-        long truncated = (raw >> SHIFT) << SHIFT;
-        if (raw <= 0)
-        {
-            return DM64.FromRaw(truncated);
-        }
-        else
-        {
-            if (raw == truncated) return DM64.FromRaw(truncated);
-            return DM64.FromRaw(truncated + SCALE);
-        }
+        long floored = ((raw >> SHIFT) << SHIFT);
+        return DM64.FromRaw( raw == floored? raw : floored + SCALE);
     }
 
     public DM64 Floor()
     {
-        DM64 o = new();
-        long truncated = (raw >> SHIFT) << SHIFT;
-        if (raw >= 0)
-        {
-            return DM64.FromRaw(truncated);
-        }
-        else
-        {
-            if (raw == truncated) return DM64.FromRaw(truncated);
-            return DM64.FromRaw(truncated - SCALE);
-        }
+        return DM64.FromRaw((raw >> SHIFT) << SHIFT);
     }
 
     public static DM64 Max(DM64 a, DM64 b)
