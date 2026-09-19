@@ -17,11 +17,11 @@ public class InputManager : MonoBehaviour
     {
         PlayerInput playerInput = GetComponent<PlayerInput>();
         playerInput.onActionTriggered += OnActionTriggered;
-        UnregisteredSerializableData<ControllerState>[] controllers = new UnregisteredSerializableData<ControllerState>[PlayerManager.MaxPlayerCount]; 
+        Controllers = new UnregisteredSerializableData<ControllerState>[PlayerManager.MaxPlayerCount]; 
         for (int i =0 ; i <PlayerManager.MaxPlayerCount; i++)
         {
             // For each player slot, create a new serialized data object of controllers
-            controllers[i] = new();
+            Controllers[i] = new();
         }
 
     }
@@ -40,7 +40,7 @@ public class InputManager : MonoBehaviour
         InputControl InputMaker = context.control;
         // If the player system was fully set up, the player manager would be able to map this to a player number
 
-        if (context.action.type == InputActionType.Value)
+        if (context.action.type == InputActionType.Button)
         {
             // Handle the action
             // Write to the current controller state
