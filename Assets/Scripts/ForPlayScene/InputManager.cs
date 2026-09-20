@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using Unity.Collections.LowLevel.Unsafe;
 using UnityEngine;
 using UnityEngine.InputSystem;
@@ -10,18 +11,20 @@ public class InputManager : MonoBehaviour
 
     public UnregisteredSerializableData<ControllerState>[] Controllers;
     // public Action ButtonEventEventHandler(ControllerState.ButtonTypes Button, int PlayerNumber, bool Pressed);
-
+    private ControllerState[] currentControllerStates;
 
     
-    public void Ready()
+    public void Start()
     {
         PlayerInput playerInput = GetComponent<PlayerInput>();
         playerInput.onActionTriggered += OnActionTriggered;
         Controllers = new UnregisteredSerializableData<ControllerState>[PlayerManager.MaxPlayerCount]; 
+        currentControllerStates = new ControllerState[PlayerManager.MaxPlayerCount];
         for (int i =0 ; i <PlayerManager.MaxPlayerCount; i++)
         {
             // For each player slot, create a new serialized data object of controllers
             Controllers[i] = new();
+            currentControllerStates[i] =new();
         }
 
     }
@@ -45,13 +48,13 @@ public class InputManager : MonoBehaviour
             // Handle the action
             // Write to the current controller state
             // Just accessing player 1 for now
-            Controllers[0].Value.SetButton(InputToButtonKey[actionName], isPress );
+            currentControllerStates[0].SetButton(InputToButtonKey[actionName], isPress );
         } else if (context.action.type == InputActionType.Value && context.valueType == typeof(Vector2))
         {
             // Otherwise, it is a stick input
             if (actionName== "Movement")
             {
-                Controllers[0].Value.LeftStick.SetFromVector(context.action.ReadValue<Vector2>());
+                currentControllerStates[0].LeftStick.SetFromVector(context.action.ReadValue<Vector2>());
             }
         }
     }
@@ -59,9 +62,11 @@ public class InputManager : MonoBehaviour
 
     public void SaveInputs(int tickIndex)
     {
-        foreach (var controller in Controllers)
+        for (int i = 0; i < Controllers.Length; i++)
         {
-            controller.Save(tickIndex);
+            // Write the current snap shot to the value and call save 
+            Controllers[i].Value = currentControllerStates[i];
+            Controllers[i].Save(tickIndex);
         }
     }
 
@@ -73,6 +78,10 @@ public class InputManager : MonoBehaviour
         }
     }
     
+    // public void GetInputs(int playernumber, int tickIndex)
+    // {
+    //     return Controllers[playernumber].
+    // }
 }
 
 

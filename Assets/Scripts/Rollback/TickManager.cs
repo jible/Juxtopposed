@@ -28,13 +28,15 @@ public class TickManager : MonoBehaviour
             _currentTickIndex = value % _maxTicks;
         }
     }
+    InputManager inputManager;
     private ITickable[] tickables;
     static TickManager Instance;
     private PhysicsServer physicsServer;
          
-    public void _Ready()
+    public void Awake()
     {
         Instance = this;
+        inputManager = FindAnyObjectByType<InputManager>();
         tickables = GetAllTickables(transform);
         physicsServer = GetComponent<PhysicsServer>();
     }
@@ -51,7 +53,7 @@ public class TickManager : MonoBehaviour
             var currentTickables = current.GetComponents<ITickable>();
             foreach (var tickable in currentTickables)
             {
-                tickables.Append(tickable);
+                tickables.Add(tickable);
             }
             
             foreach (Transform child in current.transform)
@@ -66,7 +68,7 @@ public class TickManager : MonoBehaviour
     {
         // Serialize all serializable data
         SerializableDataManager.SaveAll(CurrentTickIndex);
-
+        inputManager.SaveInputs(CurrentTickIndex);
         // Tick each object
         foreach (var tickable in tickables)
         {

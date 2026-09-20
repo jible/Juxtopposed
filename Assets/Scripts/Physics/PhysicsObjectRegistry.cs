@@ -26,7 +26,6 @@ public class PhysicsObjectRegistry : MonoBehaviour
     
     public void Reset()
     {
-        Debug.Log("resetting");
         All.Clear();
         Registered.Clear();
     }

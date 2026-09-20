@@ -13,12 +13,13 @@ public class PlayManager : MonoBehaviour
     StageHolder stageHolder;
     [SerializeField]
     CharacterHolder characterHolder;
-    public void Ready()
+    public void Awake()
     {
         // Establish references
-        physicsServer = GetComponent<PhysicsServer>();
+        physicsServer = transform.GetComponent<PhysicsServer>();
         tickManager = GetComponent<TickManager>();
-        if (! physicsServer || !tickManager || !characterHolder || !stageHolder)
+        if (physicsServer== null || tickManager == null )
+        // characterHolder== null || stageHolder== null)
         {
             Debug.LogError("Manager Not found");
             return;
