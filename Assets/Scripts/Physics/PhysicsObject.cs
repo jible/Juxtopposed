@@ -1,4 +1,5 @@
 using System;
+using Unity.VisualScripting;
 using UnityEditor.PackageManager;
 using UnityEngine;
 
@@ -8,9 +9,26 @@ public class PhysicsObject : MonoBehaviour
 {
     [SerializeReference, SubclassSelector]
     public Shape shape;
+    public SerializableProperty<DMVector> velocity;
     public int mask;
     public int layer;
     public bool isStatic = false;
+    public int physicsObjectID = -1;
+    [DoNotSerialize, HideInInspector]
+    public int visitStamp;
+    private DeterministicTransform _deterministicTransform =null;
+    [HideInInspector]
+    public DeterministicTransform deterministicTransform
+    {
+        get
+        {
+            if (_deterministicTransform == null)
+            {
+                _deterministicTransform = GetComponent<DeterministicTransform>();
+            }
+            return _deterministicTransform;
+        }
+    }
     public ObjectType objectType;
     private PhysicsObjectRegistry _physicsObjectRegistry;
     private PhysicsObjectRegistry physicsObjectRegistry
@@ -42,6 +60,11 @@ public class PhysicsObject : MonoBehaviour
     /// </summary>
     public event Action<PhysicsObject, PhysicsObject> Overlapping;
 
+    /// <summary>
+    /// Emitted when this body was stopped by another object
+    /// </summary>
+    public event Action<PhysicsObject, PhysicsObject> Colliding;
+
     public enum ObjectType
     {
         TriggerBox,
@@ -56,6 +79,15 @@ public class PhysicsObject : MonoBehaviour
         Overlapping?.Invoke(this, other);
     }
 
+    /// <summary>
+    /// Call this to emit the Colliding event- when this body collided with other.
+    /// </summary>
+    /// <param name="other"></param>
+    public void OnCollide(PhysicsObject other)
+    {
+        Colliding?.Invoke(this, other);
+    }
+
     public void Awake()
     {
         physicsObjectRegistry.Register(this);
@@ -65,7 +97,7 @@ public class PhysicsObject : MonoBehaviour
     // Register is a no-op if already registered.
     public void OnEnable()
     {
-        physicsObjectRegistry.Register(this);
+        physicsObjectID = physicsObjectRegistry.Register(this);
     }
 
     private void Reset()

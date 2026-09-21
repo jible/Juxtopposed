@@ -1,11 +1,17 @@
+using System;
 using System.Collections.Generic;
+using System.Collections.Specialized;
+using System.Linq;
 using System.Runtime.CompilerServices;
 using System.Runtime.ExceptionServices;
 using System.Threading;
+using Unity.Collections;
 using Unity.VisualScripting;
 using UnityEditor;
 using UnityEngine;
 using UnityEngine.Animations;
+using UnityEngine.InputSystem.Composites;
+using UnityEngine.UI;
 using UnityEngine.UIElements;
 
 [DefaultExecutionOrder(-10000)]
@@ -13,13 +19,18 @@ using UnityEngine.UIElements;
 public class PhysicsServer : MonoBehaviour
 {
     public DM64 Epsilon = new(.0001f);
-
+    private List<PhysicsObject>[] BucketByLayer = new List<PhysicsObject>[32];
+    private List<PhysicsObject>[] StaticBucketByLayer = new List<PhysicsObject>[32];
 
     [SerializeField]
 
     public DM64 HashGridSize = new(30);
     private PhysicsObjectRegistry physicsObjectRegistry;
-
+    private enum Axis
+    {
+        X,Y
+    }
+    private static readonly Axis[] axes = {Axis.X, Axis.Y};
     // Awake is not called again after a script reload (domain reload), but statics are wiped.
 
     public void Awake()
@@ -28,88 +39,149 @@ public class PhysicsServer : MonoBehaviour
         // so this clear always happens before those objects register themselves.
         physicsObjectRegistry = GetComponent<PhysicsObjectRegistry>();
         SerializableDataManager.Reset();
+
+        for (int i = 0;  i < BucketByLayer.Length; i++)
+        {
+            BucketByLayer[i] = new();
+            StaticBucketByLayer[i] = new();
+        }
     }
 
-
-    public void Tick()
+    public void RegisterPhysicsObjectsByLayer()
     {
-        // Spacial Hashing:
-        var tileToCells = new Dictionary<Vector2Int, List<PhysicsObject>>();
-        var objectToHashCells = new Dictionary<PhysicsObject, List<Vector2Int>>();
-
-        HashObjects(
-            tileToCells,
-            objectToHashCells
-        );
-
-        var interacted = new HashSet<(PhysicsObject, PhysicsObject)>();
-        foreach (var entityA in physicsObjectRegistry.All)
+        // We already have every physics object, but we wait to call this until each of them have their properties configured 
+        // such that they will not need to change during runtime- ie the player registers their hitboxes,
+        //  but needs to set their layer 
+        for (int i = 0; i < BucketByLayer.Length; i++)
         {
-            if (entityA == null)
+            BucketByLayer[i].Clear();
+            StaticBucketByLayer[i].Clear();
+        }
+        // Triggers can overlap anything, but only static colliders are ever collided against
+        AddToLayerBuckets(BucketByLayer, physicsObjectRegistry.All);
+        AddToLayerBuckets(StaticBucketByLayer, physicsObjectRegistry.StaticColliders);
+    }
+
+    private static void AddToLayerBuckets(List<PhysicsObject>[] buckets, List<PhysicsObject> objects)
+    {
+        foreach (PhysicsObject obj in objects)
+        {
+            for (int i = 0; i < buckets.Length; i++)
             {
-                continue;
-            }
-            // iterate through each object it is overlapping
-            if ( !entityA.isActive || entityA.shape == null)
-            {
-                continue;
-            }
-            foreach (var tile in objectToHashCells[entityA])
-            {
-                foreach (var entityB in tileToCells[tile])
+                if ((obj.layer & (1 << i)) != 0)
                 {
-                    if (interacted.Contains((entityA, entityB)) ||entityB == entityA || entityA.shape == null || entityB.shape == null )
-                    {
-                        continue;
-                    }
-                    interacted.Add((entityA, entityB));
-                    interacted.Add((entityB, entityA));
-                    CheckForOverlap(entityA, entityB);
+                    buckets[i].Add(obj);
                 }
             }
         }
     }
 
-    public void CheckForOverlap(PhysicsObject a, PhysicsObject b)
+    // Should be pretty much the last thing that happens every frame
+    public void Tick()
     {
-        /*
-         * Check if any of these cases can occur:
-         * 
-         * both are collision objects and one is static the other is not and the dynamic one masks the static one's layer?
-         * 
-         * one or both are triggers and the trigger masks the other object's layer
-         */
-        bool bothColliders = a.objectType == PhysicsObject.ObjectType.CollisionObject && b.objectType == PhysicsObject.ObjectType.CollisionObject;
-        bool aCollisionB = bothColliders && !a.isStatic && b.isStatic && (a.mask & b.layer) != 0;
-        bool bCollisionA = bothColliders && !b.isStatic && a.isStatic && (b.mask & a.layer) != 0;
-        bool aTriggeredByB = a.objectType == PhysicsObject.ObjectType.TriggerBox && (a.mask & b.layer) != 0;
-        bool bTriggeredByA = b.objectType == PhysicsObject.ObjectType.TriggerBox && (b.mask & a.layer) != 0;
+        collisionEvents.Clear();
+        triggerEvents.Clear();
 
-        if (!(aCollisionB || bCollisionA || aTriggeredByB || bTriggeredByA))
+        foreach (Axis axis in axes)
         {
-            return;
+            ApplyVelocity(axis);
+            ResolveAllCollisions(axis);
         }
 
+        DetectTriggers();
 
-        // If at least one instance requires a check:
+        DispatchSignals();
+    }
+    
+    
+    //A number that constantly increases each time an object queries its other objects
+    // The only use for this is object A iterating over the objects it masks and 
+    // making sure it doesn't visit them twice if it masks them on 2 different layers.
+    private int Stamp = 0;
+
+    // Signals are recorded while the passes run and dispatched together afterwards,
+    // so listeners never run while positions are still being resolved
+    private struct CollisionEvent
+    {
+        public PhysicsObject Body;
+        public PhysicsObject Solid;
+    }
+    private struct TriggerEvent
+    {
+        public PhysicsObject Trigger;
+        public PhysicsObject Target;
+    }
+    private readonly List<CollisionEvent> collisionEvents = new();
+    private readonly List<TriggerEvent> triggerEvents = new();
+
+
+    private void ApplyVelocity(Axis axis)
+    {   
+        foreach (var physicsObject in physicsObjectRegistry.All)
+            {
+                var x = axis == Axis.X?physicsObject.velocity.Value.x: new DM64(0);
+                var y = axis == Axis.Y?physicsObject.velocity.Value.y: new DM64(0);
+                physicsObject.deterministicTransform.position += new DMVector( x, y );
+            }
+        
+    }
+
+    private void ResolveAllCollisions(Axis axis)
+    {
+        // Only active dynamic bodies query, and only against static colliders
+        foreach (var A in physicsObjectRegistry.DynamicBodies)
+        {
+            if (!A.isActive) continue;
+            int stamp = ++Stamp;
+            for (int layerIndex = 0; layerIndex < StaticBucketByLayer.Length; layerIndex++)
+            {
+                // Skip layers this object doesn't mask
+                if ((A.mask & (1 << layerIndex)) == 0) continue;
+                foreach (var B in StaticBucketByLayer[layerIndex])
+                {
+                    if (!B.isActive || B.visitStamp == stamp) continue;
+                    B.visitStamp = stamp;
+                    ResolveCollision(A, B, axis);
+                }
+            }
+        }
+    }
+
+    private void DetectTriggers()
+    {
+        // Only active triggers query, against anything on the layers they mask
+        foreach (var A in physicsObjectRegistry.Triggers)
+        {
+            if (!A.isActive) continue;
+            int stamp = ++Stamp;
+            for (int layerIndex = 0; layerIndex < BucketByLayer.Length; layerIndex++)
+            {
+                if ((A.mask & (1 << layerIndex)) == 0) continue;
+                foreach (var B in BucketByLayer[layerIndex])
+                {
+                    if (A == B || !B.isActive || B.visitStamp == stamp) continue;
+                    B.visitStamp = stamp;
+                    checkTrigger(A, B);
+                }
+            }
+        }
+    }
+
+    // Only records for a. The reverse direction is recorded when b's own query reaches a, so a mutual pair isn't recorded twice
+    public void checkTrigger(PhysicsObject a, PhysicsObject b)
+    {
         if (OverlapChecker.CheckOverlap(a, b))
         {
-            if (aTriggeredByB)
-            {
-                HandleTrigger(a, b);
-            }
-            if (bTriggeredByA)
-            {
-                HandleTrigger(b, a);
-            }
-            if (aCollisionB )
-            {
-                HandleCollision(a, b);
-            }
-            if (bCollisionA)
-            {
-                HandleCollision(b,a);
-            }
+            triggerEvents.Add(new TriggerEvent { Trigger = a, Target = b });
+        }
+    }
+
+    private void ResolveCollision(PhysicsObject a, PhysicsObject b, Axis axis)
+    {
+        // a is a dynamic body that masks b's layer, and b is a static collider
+        if (OverlapChecker.CheckOverlap(a, b) && HandleCollision(a, b, axis))
+        {
+            collisionEvents.Add(new CollisionEvent { Body = a, Solid = b });
         }
     }
 
@@ -118,15 +190,45 @@ public class PhysicsServer : MonoBehaviour
     /// </summary>
     /// <param name="a"></param>
     /// <param name="b"></param>
-    public void HandleTrigger(PhysicsObject a, PhysicsObject b)
+    public void DispatchTrigger(PhysicsObject a, PhysicsObject b)
     {
         // Already checked for overlap- just handle it
         a.OnOverlap(b);
 
-
     }
 
-    public bool HandleCollision(PhysicsObject a, PhysicsObject b)
+    // Emits everything recorded this tick, collisions first and then triggers, in the order they were detected
+    private void DispatchSignals()
+    {
+        for (int i = 0; i < collisionEvents.Count; i++)
+        {
+            DispatchCollision(collisionEvents[i].Body, collisionEvents[i].Solid);
+        }
+        for (int i = 0; i < triggerEvents.Count; i++)
+        {
+            DispatchTrigger(triggerEvents[i].Trigger, triggerEvents[i].Target);
+        }
+    }
+
+    /// <summary>
+    /// Emits the signal that body was stopped by solid
+    /// </summary>
+    public void DispatchCollision(PhysicsObject body, PhysicsObject solid)
+    {
+        body.OnCollide(solid);
+    }
+
+    // Which way to push a out of b along one axis: back against a's motion, or, if a isn't moving on that axis
+    // (a platform moved into it, or it spawned overlapping), away from b's center
+    private static DM64 PushDirection(DM64 velocity, DM64 aPosition, DM64 bPosition)
+    {
+        DM64 direction = -velocity.Sign();
+        if (direction == 0) direction = (aPosition - bPosition).Sign();
+        if (direction == 0) direction = new DM64(1);
+        return direction;
+    }
+
+    private bool HandleCollision(PhysicsObject a, PhysicsObject b, Axis axis)
     {
         // Resolve the edges of the collision by moving the non-static object out of the static one
         // In this case, A is dynamic, b is static
@@ -135,95 +237,29 @@ public class PhysicsServer : MonoBehaviour
             return false; // Just don't do anything if they aren't squares for now
         }
 
-        DeterministicTransform aTransform = a.GetComponent<DeterministicTransform>();
-        DeterministicTransform bTransform = b.GetComponent<DeterministicTransform>();
 
         Square aSquare = (Square)a.shape;
         Square bSquare = (Square)b.shape;
 
-        // Positions are saved at the start of the tick, before anything moves,
-        // so this tick's slot holds where each body ended the previous tick
-        DMVector prevAPosition = aTransform.PositionAtTickIndex(TickManager.CurrentTickIndex);
-        DMVector prevBPosition = bTransform.PositionAtTickIndex(TickManager.CurrentTickIndex);
-        DMVector currentAPosition = aTransform.position;
-        DMVector currentBPosition = bTransform.position;
+        DMVector currentAPosition = a.deterministicTransform.position;
 
-        // Sweep in b's frame so a moving b is handled. When b is still, this is just a's path against b.
-        DMVector relativePrev = prevAPosition - prevBPosition;
-        DMVector relativeCurrent = currentAPosition - currentBPosition;
-
-        // If a hasn't moved relative to b there is no path to sweep
-        if (relativePrev == relativeCurrent)
-        {
-            return HandleStaticRectRectCollision(aSquare, aTransform, bSquare, bTransform);
+        // Assuming the 2 are colliding because it has already been checked,
+        // A is the non-static one, so its gets moved 
+        // It get slid to the slide opposite to the magnitude of the velocity 
+        DM64 newX = currentAPosition.x;
+        DM64 newY = currentAPosition.y;
+        if (axis == Axis.X){
+            newX = b.deterministicTransform.position.x + 
+            (PushDirection(a.velocity.Value.x, currentAPosition.x, b.deterministicTransform.position.x) * (Epsilon + aSquare.size.x/2 + bSquare.size.x/2));
+        }else if (axis == Axis.Y){
+            newY = b.deterministicTransform.position.y + 
+            (PushDirection(a.velocity.Value.y, currentAPosition.y, b.deterministicTransform.position.y) * (Epsilon + aSquare.size.y/2 + bSquare.size.y/2));
         }
 
-        DMVector vel = relativeCurrent - relativePrev;
-
-        // Both boxes are centered on their positions, so b grown by a's half size
-        // is a box centered on the origin of b's frame
-        DM64 zero = new DM64(0);
-        DMVector halfExtent = (aSquare.size + bSquare.size) / 2;
-        DMVector expandedMin = new DMVector(zero - halfExtent.x, zero - halfExtent.y);
-        DMVector expandedMax = halfExtent;
-
-        DM64 enterX;
-        DM64 exitX;
-        if (vel.x == 0)
-        {
-            // Not moving on X: it is inside b's X range for the whole sweep or never
-            if (relativePrev.x < expandedMin.x || relativePrev.x > expandedMax.x) return false;
-            enterX = zero;
-            exitX = new DM64(1);
-        }
-        else
-        {
-            enterX = (expandedMin.x - relativePrev.x) / vel.x;
-            exitX = (expandedMax.x - relativePrev.x) / vel.x;
-            if (vel.x < 0) { (enterX, exitX) = (exitX, enterX); }
-        }
-
-        DM64 enterY;
-        DM64 exitY;
-        if (vel.y == 0)
-        {
-            if (relativePrev.y < expandedMin.y || relativePrev.y > expandedMax.y) return false;
-            enterY = zero;
-            exitY = new DM64(1);
-        }
-        else
-        {
-            enterY = (expandedMin.y - relativePrev.y) / vel.y;
-            exitY = (expandedMax.y - relativePrev.y) / vel.y;
-            if (vel.y < 0) { (enterY, exitY) = (exitY, enterY); }
-        }
-
-        bool enteredOnX = enterX > enterY;
-        DM64 enter = enteredOnX ? enterX : enterY;
-        DM64 exit = enteredOnX ? exitY : exitX;
-
-        if (enter > exit || enter > 1 || enter < 0) { return false; }
-
-        // Stop at the surface that was hit, nudged out by epsilon so the boxes aren't overlapping next check
-        DMVector normal = enteredOnX
-            ? new DMVector(vel.x.Sign() * -1, zero)
-            : new DMVector(zero, vel.y.Sign() * -1);
-        DMVector hitPosition = relativePrev + (vel * enter) + (normal * Epsilon) + currentBPosition;
-
-        // Sliding: only the axis that was hit is stopped, movement on the other axis is kept
-        aTransform.position = enteredOnX
-            ? new DMVector(hitPosition.x, currentAPosition.y)
-            : new DMVector(currentAPosition.x, hitPosition.y);
-
+        a.deterministicTransform.position = new(newX, newY);
+        
         return true;
     }
-
-    public bool HandleStaticRectRectCollision(Square aSquare, DeterministicTransform aTransform, Square bSquare, DeterministicTransform bTransform)
-	{
-		DM64 newY = bTransform.position.y +(bSquare.size.y/2) + (aSquare.size.y/2) + Epsilon; 
-		aTransform.position= new (bTransform.position.x,newY);
-		return true;
-	}
 
 
     

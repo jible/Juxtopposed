@@ -125,6 +125,7 @@ public struct DM64
         o.raw = a.raw - b.raw;
         return o;
     }
+    public static DM64 operator -(DM64 a) => FromRaw(-a.raw);
     public static DM64 operator *(DM64 a, DM64 b)
     {
         DM64 f = new DM64();
@@ -219,9 +220,9 @@ public struct DM64
     public static DM64 operator /(DM64 a, int b) => a / new DM64(b);
 
 
-    public static DM64 operator +(int a, DM64 b) => a + b;
-    public static DM64 operator -(int a, DM64 b) => a - b;
-    public static DM64 operator *(int a, DM64 b) => a * b;
+    public static DM64 operator +(int a, DM64 b) => new DM64(a) + b;
+    public static DM64 operator -(int a, DM64 b) => new DM64(a) - b;
+    public static DM64 operator *(int a, DM64 b) => new DM64(a) * b;
     public static DM64 operator /(int a, DM64 b) => new DM64(a) / b;
 
 
