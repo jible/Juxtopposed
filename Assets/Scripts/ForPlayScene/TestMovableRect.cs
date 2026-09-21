@@ -13,6 +13,8 @@ public class TestMovableRect : MonoBehaviour , ITickable
     {
         DMVector stick = inputManager.Controllers[0].Value.LeftStick.ToVector();
 
-        GetComponent<DeterministicTransform>().position +=stick /60;
+        // GetComponent<DeterministicTransform>().position +=stick /60;
+        GetComponent<PhysicsObject>().velocity.Value = stick /60;
+
     }
 }

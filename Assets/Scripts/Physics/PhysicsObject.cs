@@ -9,6 +9,7 @@ public class PhysicsObject : MonoBehaviour
 {
     [SerializeReference, SubclassSelector]
     public Shape shape;
+    [DoNotSerialize, HideInInspector]
     public SerializableProperty<DMVector> velocity;
     public int mask;
     public int layer;

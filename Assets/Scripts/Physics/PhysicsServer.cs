@@ -123,7 +123,6 @@ public class PhysicsServer : MonoBehaviour
                 var y = axis == Axis.Y?physicsObject.velocity.Value.y: new DM64(0);
                 physicsObject.deterministicTransform.position += new DMVector( x, y );
             }
-        
     }
 
     private void ResolveAllCollisions(Axis axis)
@@ -194,7 +193,6 @@ public class PhysicsServer : MonoBehaviour
     {
         // Already checked for overlap- just handle it
         a.OnOverlap(b);
-
     }
 
     // Emits everything recorded this tick, collisions first and then triggers, in the order they were detected
@@ -259,63 +257,6 @@ public class PhysicsServer : MonoBehaviour
         a.deterministicTransform.position = new(newX, newY);
         
         return true;
-    }
-
-
-    
-
-    // Spacial Hash Makers:
-
-    private void HashObjects(
-        Dictionary<Vector2Int, List<PhysicsObject>> tileToCells,
-        Dictionary<PhysicsObject, List<Vector2Int>> objectToHashCells)
-    {
-        foreach( var entity in physicsObjectRegistry.All)
-        {
-            if (entity == null) // In theory should never happen
-            {
-                Debug.LogError("Encountered null physics object. Was a physics object deleted in play?");
-                continue;
-            } 
-            if (!entity.isActive || entity.shape == null)
-            {
-                continue;
-            }
-            var overlap = GetOverlappingTiles(entity);
-            foreach (var tile in overlap)
-            {
-                if (!tileToCells.ContainsKey(tile))
-                {
-                    tileToCells[tile] = new List<PhysicsObject>();
-                }
-                tileToCells[tile].Add(entity);
-            }
-            objectToHashCells[entity] = overlap;
-
-        }
-    }
-    
-
-    private List<Vector2Int> GetOverlappingTiles(PhysicsObject entity)
-    {
-        var output = new List<Vector2Int>();
-        entity.shape.GetBounds(entity.GetComponent<DeterministicTransform>().globalPosition, out DMVector min, out DMVector max);
-
-        // Tiles are keyed by grid cell index, so objects in the same cell always share a key
-        int leftCell = (min.x / HashGridSize).Floor().to_int();
-        int rightCell = (max.x / HashGridSize).Floor().to_int();
-        int downCell = (min.y / HashGridSize).Floor().to_int();
-        int upCell = (max.y / HashGridSize).Floor().to_int();
-
-        for (int x = leftCell; x <= rightCell; x++)
-        {
-            for (int y = downCell; y <= upCell; y++)
-            {
-                output.Add(new Vector2Int(x, y));
-            }
-        }
-
-        return output;
     }
 
 
