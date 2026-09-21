@@ -6,7 +6,7 @@ public class DeterministicTransform : MonoBehaviour
     private bool globalPositionIsDirty = false;
 
     [SerializeField]
-    private SerializableData<DMVector> serializedPosition = new();
+    private SerializableProperty<DMVector> serializedPosition = new();
     public DMVector position
     {
         get
@@ -20,6 +20,10 @@ public class DeterministicTransform : MonoBehaviour
         }
     }
 
+    public DMVector PositionAtTickIndex(int tickIndex)
+    {
+        return serializedPosition.GetDataFromFrame(tickIndex);
+    }
 
 
     [SerializeField, HideInInspector]
@@ -63,6 +67,11 @@ public class DeterministicTransform : MonoBehaviour
                 child.SetDirty();
             }
         }
+    }
+
+    public void Awake()
+    {
+        serializedPosition.OnLoaded = SetDirty;
     }
 
     public void OnValidate()

@@ -30,7 +30,7 @@ public class PhysicsObject : MonoBehaviour
     }
 
     [SerializeField]
-    private SerializableData<bool> serializedIsActive = new();
+    private SerializableProperty<bool> serializedIsActive = new();
     public bool isActive
     {
         get => serializedIsActive.Value;

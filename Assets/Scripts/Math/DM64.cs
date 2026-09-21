@@ -1,6 +1,5 @@
 using System;
 using System.ComponentModel;
-using System.Numerics;
 using UnityEngine.UIElements;
 using UnityEditor;
 using UnityEngine;
@@ -129,8 +128,37 @@ public struct DM64
     public static DM64 operator *(DM64 a, DM64 b)
     {
         DM64 f = new DM64();
-        f.raw = (long)(((BigInteger)a.raw * (BigInteger)b.raw) >> SHIFT);
+        f.raw = MulShift(a.raw, b.raw);
         return f;
+    }
+
+    // (a * b) >> SHIFT via a 128-bit product, without allocating. Floors like an arithmetic shift and throws on overflow.
+    private static long MulShift(long a, long b)
+    {
+        unchecked
+        {
+            ulong ua = (ulong)a, ub = (ulong)b;
+            ulong aLo = ua & 0xFFFFFFFFUL, aHi = ua >> 32;
+            ulong bLo = ub & 0xFFFFFFFFUL, bHi = ub >> 32;
+
+            ulong p0 = aLo * bLo;
+            ulong p1 = aLo * bHi;
+            ulong p2 = aHi * bLo;
+            ulong p3 = aHi * bHi;
+
+            ulong mid = (p0 >> 32) + (p1 & 0xFFFFFFFFUL) + (p2 & 0xFFFFFFFFUL);
+            ulong lo = (p0 & 0xFFFFFFFFUL) | (mid << 32);
+
+            // High word of the unsigned product, corrected to the signed product's high word
+            long hi = (long)(p3 + (p1 >> 32) + (p2 >> 32) + (mid >> 32));
+            if (a < 0) hi -= b;
+            if (b < 0) hi -= a;
+
+            long topBits = hi >> (SHIFT - 1);
+            if (topBits != 0 && topBits != -1) throw new OverflowException();
+
+            return (hi << (64 - SHIFT)) | (long)(lo >> SHIFT);
+        }
     }
 
 
@@ -191,9 +219,9 @@ public struct DM64
     public static DM64 operator /(DM64 a, int b) => a / new DM64(b);
 
 
-    public static DM64 operator +(int a, DM64 b) => b + a;
-    public static DM64 operator -(int a, DM64 b) => b - a;
-    public static DM64 operator *(int a, DM64 b) => b * a;
+    public static DM64 operator +(int a, DM64 b) => a + b;
+    public static DM64 operator -(int a, DM64 b) => a - b;
+    public static DM64 operator *(int a, DM64 b) => a * b;
     public static DM64 operator /(int a, DM64 b) => new DM64(a) / b;
 
 

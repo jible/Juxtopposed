@@ -9,6 +9,10 @@ public class InputManager : MonoBehaviour
 {
     public float DriftThreshold = .1f;
 
+    [Header("Debug")]
+    [Tooltip("Hard-codes routing: keyboard = player 1, any other device = player 2. Turn off to use PlayerManager's configured assignments.")]
+    [SerializeField] private bool debugDeviceRouting = true;
+
     public UnregisteredSerializableData<ControllerState>[] Controllers;
     // public Action ButtonEventEventHandler(ControllerState.ButtonTypes Button, int PlayerNumber, bool Pressed);
     private ControllerState[] currentControllerStates;
@@ -40,23 +44,32 @@ public class InputManager : MonoBehaviour
     {
         string actionName = context.action.name;
         bool isPress = !context.canceled;
-        InputControl InputMaker = context.control;
-        // If the player system was fully set up, the player manager would be able to map this to a player number
+        int player = GetPlayerIndex(context.control.device);
+        if (player < 0) return;
 
         if (context.action.type == InputActionType.Button)
         {
             // Handle the action
             // Write to the current controller state
-            // Just accessing player 1 for now
-            currentControllerStates[0].SetButton(InputToButtonKey[actionName], isPress );
+            currentControllerStates[player].SetButton(InputToButtonKey[actionName], isPress );
         } else if (context.action.type == InputActionType.Value && context.valueType == typeof(Vector2))
         {
             // Otherwise, it is a stick input
             if (actionName== "Movement")
             {
-                currentControllerStates[0].LeftStick.SetFromVector(context.action.ReadValue<Vector2>());
+                currentControllerStates[player].LeftStick.SetFromVector(context.action.ReadValue<Vector2>());
             }
         }
+    }
+
+    // Returns -1 if the device has no player assigned
+    private int GetPlayerIndex(InputDevice device)
+    {
+        if (debugDeviceRouting)
+        {
+            return device is Keyboard ? 0 : 1;
+        }
+        return PlayerManager.DeviceIDToPlayerNumber.TryGetValue(device.deviceId, out int playerNumber) ? playerNumber : -1;
     }
     
 

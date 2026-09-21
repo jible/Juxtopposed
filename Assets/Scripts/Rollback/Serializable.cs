@@ -1,5 +1,9 @@
 using System.Collections.Generic;
+using System.Diagnostics.CodeAnalysis;
+using NUnit.Framework;
 using Unity.VisualScripting;
+using UnityEngine;
+using UnityEngine.Subsystems;
 
 public static class SerializableDataManager
 {
@@ -40,9 +44,11 @@ public interface ISerializable
 }
 
 [System.Serializable]
-public class SerializableData<T> : ISerializable where T : unmanaged
+public class SerializableProperty<T> : ISerializable where T : unmanaged
 {
     public T Value;
+    // Lets the owner react to a rollback load, which writes Value directly and bypasses any property setter
+    public System.Action OnLoaded;
     private readonly T[] values = new T[TickManager._maxTicks];
     public void Save(int tickIndex)
     {
@@ -51,9 +57,14 @@ public class SerializableData<T> : ISerializable where T : unmanaged
     public void Load(int tickIndex)
     {
         Value = values[tickIndex];
+        OnLoaded?.Invoke();
     }
-    public SerializableData(){
+    public SerializableProperty(){
         SerializableDataManager.Register(this);
+    }
+    public T GetDataFromFrame(int tickIndex)
+    {
+        return values[tickIndex];
     }
 
 }
@@ -70,6 +81,10 @@ public class UnregisteredSerializableData<T> : ISerializable where T : unmanaged
     public void Load(int tickIndex)
     {
         Value = values[tickIndex];
+    }
+    public T GetDataFromFrame(int tickIndex)
+    {
+        return values[tickIndex];
     }
 
 }

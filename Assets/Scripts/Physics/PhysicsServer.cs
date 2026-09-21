@@ -1,9 +1,12 @@
 using System.Collections.Generic;
 using System.Runtime.CompilerServices;
 using System.Runtime.ExceptionServices;
+using System.Threading;
+using Unity.VisualScripting;
 using UnityEditor;
 using UnityEngine;
 using UnityEngine.Animations;
+using UnityEngine.UIElements;
 
 [DefaultExecutionOrder(-10000)]
 [ExecuteAlways]
@@ -123,16 +126,107 @@ public class PhysicsServer : MonoBehaviour
 
     }
 
-    public void HandleCollision(PhysicsObject a, PhysicsObject b)
+    public bool HandleCollision(PhysicsObject a, PhysicsObject b)
     {
         // Resolve the edges of the collision by moving the non-static object out of the static one
         // In this case, A is dynamic, b is static
         // Thus a will be repelled from b's surface
+        if ( !(a.shape is Square) || !(b.shape is Square) ){
+            return false; // Just don't do anything if they aren't squares for now
+        }
 
+        DeterministicTransform aTransform = a.GetComponent<DeterministicTransform>();
+        DeterministicTransform bTransform = b.GetComponent<DeterministicTransform>();
 
+        Square aSquare = (Square)a.shape;
+        Square bSquare = (Square)b.shape;
 
+        // Positions are saved at the start of the tick, before anything moves,
+        // so this tick's slot holds where each body ended the previous tick
+        DMVector prevAPosition = aTransform.PositionAtTickIndex(TickManager.CurrentTickIndex);
+        DMVector prevBPosition = bTransform.PositionAtTickIndex(TickManager.CurrentTickIndex);
+        DMVector currentAPosition = aTransform.position;
+        DMVector currentBPosition = bTransform.position;
 
+        // Sweep in b's frame so a moving b is handled. When b is still, this is just a's path against b.
+        DMVector relativePrev = prevAPosition - prevBPosition;
+        DMVector relativeCurrent = currentAPosition - currentBPosition;
+
+        // If a hasn't moved relative to b there is no path to sweep
+        if (relativePrev == relativeCurrent)
+        {
+            return HandleStaticRectRectCollision(aSquare, aTransform, bSquare, bTransform);
+        }
+
+        DMVector vel = relativeCurrent - relativePrev;
+
+        // Both boxes are centered on their positions, so b grown by a's half size
+        // is a box centered on the origin of b's frame
+        DM64 zero = new DM64(0);
+        DMVector halfExtent = (aSquare.size + bSquare.size) / 2;
+        DMVector expandedMin = new DMVector(zero - halfExtent.x, zero - halfExtent.y);
+        DMVector expandedMax = halfExtent;
+
+        DM64 enterX;
+        DM64 exitX;
+        if (vel.x == 0)
+        {
+            // Not moving on X: it is inside b's X range for the whole sweep or never
+            if (relativePrev.x < expandedMin.x || relativePrev.x > expandedMax.x) return false;
+            enterX = zero;
+            exitX = new DM64(1);
+        }
+        else
+        {
+            enterX = (expandedMin.x - relativePrev.x) / vel.x;
+            exitX = (expandedMax.x - relativePrev.x) / vel.x;
+            if (vel.x < 0) { (enterX, exitX) = (exitX, enterX); }
+        }
+
+        DM64 enterY;
+        DM64 exitY;
+        if (vel.y == 0)
+        {
+            if (relativePrev.y < expandedMin.y || relativePrev.y > expandedMax.y) return false;
+            enterY = zero;
+            exitY = new DM64(1);
+        }
+        else
+        {
+            enterY = (expandedMin.y - relativePrev.y) / vel.y;
+            exitY = (expandedMax.y - relativePrev.y) / vel.y;
+            if (vel.y < 0) { (enterY, exitY) = (exitY, enterY); }
+        }
+
+        bool enteredOnX = enterX > enterY;
+        DM64 enter = enteredOnX ? enterX : enterY;
+        DM64 exit = enteredOnX ? exitY : exitX;
+
+        if (enter > exit || enter > 1 || enter < 0) { return false; }
+
+        // Stop at the surface that was hit, nudged out by epsilon so the boxes aren't overlapping next check
+        DMVector normal = enteredOnX
+            ? new DMVector(vel.x.Sign() * -1, zero)
+            : new DMVector(zero, vel.y.Sign() * -1);
+        DMVector hitPosition = relativePrev + (vel * enter) + (normal * Epsilon) + currentBPosition;
+
+        // Sliding: only the axis that was hit is stopped, movement on the other axis is kept
+        aTransform.position = enteredOnX
+            ? new DMVector(hitPosition.x, currentAPosition.y)
+            : new DMVector(currentAPosition.x, hitPosition.y);
+
+        return true;
     }
+
+    public bool HandleStaticRectRectCollision(Square aSquare, DeterministicTransform aTransform, Square bSquare, DeterministicTransform bTransform)
+	{
+		DM64 newY = bTransform.position.y +(bSquare.size.y/2) + (aSquare.size.y/2) + Epsilon; 
+		aTransform.position= new (bTransform.position.x,newY);
+		return true;
+	}
+
+
+    
 
     // Spacial Hash Makers:
 

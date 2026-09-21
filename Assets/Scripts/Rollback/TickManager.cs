@@ -8,6 +8,7 @@ public class TickManager : MonoBehaviour
     [SerializeField]
     public static int _maxTicks = 20;
     private static int _currentTick = 0;
+    
     private static int _currentTickIndex= 0 ;
     public static int CurrentTickIndex
     {
@@ -68,7 +69,10 @@ public class TickManager : MonoBehaviour
     {
         // Serialize all serializable data
         SerializableDataManager.SaveAll(CurrentTickIndex);
+        // If you aren't rolling back, save the inputs
         inputManager.SaveInputs(CurrentTickIndex);
+        // Then load the current index, regardless
+        inputManager.LoadInputs(CurrentTickIndex);
         // Tick each object
         foreach (var tickable in tickables)
         {
