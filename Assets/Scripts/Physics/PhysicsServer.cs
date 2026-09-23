@@ -24,7 +24,6 @@ public class PhysicsServer : MonoBehaviour
 
     [SerializeField]
 
-    public DM64 HashGridSize = new(30);
     private PhysicsObjectRegistry physicsObjectRegistry;
     private enum Axis
     {

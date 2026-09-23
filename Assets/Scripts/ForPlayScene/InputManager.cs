@@ -16,7 +16,6 @@ public class InputManager : MonoBehaviour
     public UnregisteredSerializableData<ControllerState>[] Controllers;
     // public Action ButtonEventEventHandler(ControllerState.ButtonTypes Button, int PlayerNumber, bool Pressed);
     private ControllerState[] currentControllerStates;
-
     
     public void Start()
     {
@@ -30,8 +29,8 @@ public class InputManager : MonoBehaviour
             Controllers[i] = new();
             currentControllerStates[i] =new();
         }
-
     }
+
     private static readonly Dictionary<string, ControllerState.ButtonTypes> InputToButtonKey = new Dictionary<string, ControllerState.ButtonTypes>
     {
         {"LightAttack", ControllerState.ButtonTypes.LIGHT},
@@ -40,12 +39,22 @@ public class InputManager : MonoBehaviour
         {"SpecialAttack", ControllerState.ButtonTypes.SPECIAL},
         {"Grab", ControllerState.ButtonTypes.GRAB},
     };
+
     public void OnActionTriggered(InputAction.CallbackContext context)
     {
         string actionName = context.action.name;
         bool isPress = !context.canceled;
         int player = GetPlayerIndex(context.control.device);
-        if (player < 0) return;
+        if (player < 0)
+        {
+            // If it's allowed, just register the player
+            if (!PlayerManager.AllowPlayerFindingDuringPlay || PlayerManager.PlayerCount == PlayerManager.MaxPlayerCount)
+            {
+                return;
+            }
+            player = PlayerManager.RegisterController(context.control.device.deviceId);
+        }
+        
 
         if (context.action.type == InputActionType.Button)
         {
@@ -65,10 +74,6 @@ public class InputManager : MonoBehaviour
     // Returns -1 if the device has no player assigned
     private int GetPlayerIndex(InputDevice device)
     {
-        if (debugDeviceRouting)
-        {
-            return device is Keyboard ? 0 : 1;
-        }
         return PlayerManager.DeviceIDToPlayerNumber.TryGetValue(device.deviceId, out int playerNumber) ? playerNumber : -1;
     }
     
@@ -90,11 +95,6 @@ public class InputManager : MonoBehaviour
             controller.Load(TickIndex);
         }
     }
-    
-    // public void GetInputs(int playernumber, int tickIndex)
-    // {
-    //     return Controllers[playernumber].
-    // }
 }
 
 
