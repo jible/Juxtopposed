@@ -7,7 +7,16 @@ public class TestMovableRect : MonoBehaviour , ITickable
     [SerializeField]
     private InputManager inputManager;
 
+    public void Awake()
+    {
+        var physicsObject= GetComponent<PhysicsObject>();
+        physicsObject.Colliding += onCollide;
+    }
 
+    public void onCollide(PhysicsObject colA, PhysicsObject otherObj, DMVector side)
+    {
+        Debug.Log("collided with" + otherObj.physicsObjectID.ToString() + " side: " + side.ToStandardVector());
+    }
     // Update is called once per frame
     public void Tick()
     {

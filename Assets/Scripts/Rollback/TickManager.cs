@@ -2,6 +2,7 @@ using System.Collections.Generic;
 using System.Linq;
 using Unity.VisualScripting;
 using UnityEngine;
+using UnityEngine.InputSystem;
 
 public class TickManager : MonoBehaviour
 {
@@ -10,7 +11,6 @@ public class TickManager : MonoBehaviour
     private uint _currentTick = 0;
     private uint _latestAccessedTick = 0;
     private uint _testRollbackTicks = 5; // You will rollback this many tick when debug rollback is pressed
-    private bool isRollingBack =false;
     public bool Ready = false;
     private uint _currentTickIndex= 0 ;
     public uint CurrentTickIndex
@@ -78,25 +78,28 @@ public class TickManager : MonoBehaviour
         inputManager.SaveInputs(CurrentTickIndex);
 
         // Decide if you are rolling back this frame
-        if (Input.GetKeyDown(KeyCode.R)) // For now, instead of comparing inputs, just press R to resimulate /rollback
-        {
-            // To roll back
-            isRollingBack = true;
-            CurrentTick = CurrentTick - _testRollbackTicks;
-
-            while (CurrentTick <= _latestAccessedTick) // Until you have resimulated to
-            {
-                SerializableDataManager.LoadAll(CurrentTick);
-                Tick();
-                CurrentTick += 1;
-            }
-
-        }
+        // if (inputManager.Controllers[0].Value.GetButton(ControllerState.ButtonTypes.JUMP)) // For now, instead of comparing inputs, just press space to resimulate /rollback
+        // {
+        //     RollbackAndResimulate();
+        // }
         Tick();
         _latestAccessedTick = CurrentTick;
         CurrentTick += 1;
         
         // Once you are done making changes to position, you can update the deterministic transform followers (to be implemented)
+    }
+
+    public void RollbackAndResimulate()
+    {
+        CurrentTick = CurrentTick - _testRollbackTicks;
+        SerializableDataManager.LoadAll(CurrentTick);
+
+        while (CurrentTick <= _latestAccessedTick) // Until you have resimulated to
+        {
+            // Debug.Log("resimulating: " + CurrentTick.ToString());
+            Tick();
+            CurrentTick += 1;
+        }
     }
 
     public void Tick()

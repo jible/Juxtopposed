@@ -62,9 +62,11 @@ public class PhysicsObject : MonoBehaviour
     public event Action<PhysicsObject, PhysicsObject> Overlapping;
 
     /// <summary>
-    /// Emitted when this body was stopped by another object
+    /// Emitted when this body was stopped by another object.
+    /// The DMVector is the side of the collision: zero on the axis that wasn't hit, and on the
+    /// hit axis, the sign of this body's velocity relative to the other object's along it.
     /// </summary>
-    public event Action<PhysicsObject, PhysicsObject> Colliding;
+    public event Action<PhysicsObject, PhysicsObject, DMVector> Colliding;
 
     public enum ObjectType
     {
@@ -84,9 +86,10 @@ public class PhysicsObject : MonoBehaviour
     /// Call this to emit the Colliding event- when this body collided with other.
     /// </summary>
     /// <param name="other"></param>
-    public void OnCollide(PhysicsObject other)
+    /// <param name="side">The side of the collision (see the Colliding event's doc comment).</param>
+    public void OnCollide(PhysicsObject other, DMVector side)
     {
-        Colliding?.Invoke(this, other);
+        Colliding?.Invoke(this, other, side);
     }
 
     public void Awake()

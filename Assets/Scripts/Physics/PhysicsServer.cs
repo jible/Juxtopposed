@@ -104,6 +104,9 @@ public class PhysicsServer : MonoBehaviour
     {
         public PhysicsObject Body;
         public PhysicsObject Solid;
+        // Which axis the collision happened on, and which side of it Body was on,
+        // as the sign of Body's velocity relative to Solid's along that axis
+        public DMVector Side;
     }
     private struct TriggerEvent
     {
@@ -177,10 +180,21 @@ public class PhysicsServer : MonoBehaviour
     private void ResolveCollision(PhysicsObject a, PhysicsObject b, Axis axis)
     {
         // a is a dynamic body that masks b's layer, and b is a static collider
-        if (OverlapChecker.CheckOverlap(a, b) && HandleCollision(a, b, axis))
+        if (OverlapChecker.CheckOverlap(a, b) && HandleCollision(a, b, axis, out DMVector side))
         {
-            collisionEvents.Add(new CollisionEvent { Body = a, Solid = b });
+            collisionEvents.Add(new CollisionEvent { Body = a, Solid = b, Side = side });
         }
+    }
+
+    // The side of the collision: zero on the axis the collision didn't happen on, and on the
+    // collision axis, the sign of Body's velocity relative to Solid's (which side Body approached from)
+    private static DMVector GetCollisionSide(PhysicsObject a, PhysicsObject b, Axis axis)
+    {
+        if (axis == Axis.X)
+        {
+            return new DMVector((a.velocity.Value.x - b.velocity.Value.x).Sign(), new DM64(0));
+        }
+        return new DMVector(new DM64(0), (a.velocity.Value.y - b.velocity.Value.y).Sign());
     }
 
     /// <summary>
@@ -199,7 +213,7 @@ public class PhysicsServer : MonoBehaviour
     {
         for (int i = 0; i < collisionEvents.Count; i++)
         {
-            DispatchCollision(collisionEvents[i].Body, collisionEvents[i].Solid);
+            DispatchCollision(collisionEvents[i].Body, collisionEvents[i].Solid, collisionEvents[i].Side);
         }
         for (int i = 0; i < triggerEvents.Count; i++)
         {
@@ -210,9 +224,9 @@ public class PhysicsServer : MonoBehaviour
     /// <summary>
     /// Emits the signal that body was stopped by solid
     /// </summary>
-    public void DispatchCollision(PhysicsObject body, PhysicsObject solid)
+    public void DispatchCollision(PhysicsObject body, PhysicsObject solid, DMVector side)
     {
-        body.OnCollide(solid);
+        body.OnCollide(solid, side);
     }
 
     // Which way to push a out of b along one axis: back against a's motion, or, if a isn't moving on that axis
@@ -225,8 +239,9 @@ public class PhysicsServer : MonoBehaviour
         return direction;
     }
 
-    private bool HandleCollision(PhysicsObject a, PhysicsObject b, Axis axis)
+    private bool HandleCollision(PhysicsObject a, PhysicsObject b, Axis axis, out DMVector side)
     {
+        side = DMVector.zero;
         // Resolve the edges of the collision by moving the non-static object out of the static one
         // In this case, A is dynamic, b is static
         // Thus a will be repelled from b's surface
@@ -254,7 +269,8 @@ public class PhysicsServer : MonoBehaviour
         }
 
         a.deterministicTransform.position = new(newX, newY);
-        
+
+        side = GetCollisionSide(a, b, axis);
         return true;
     }
 
