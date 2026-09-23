@@ -37,6 +37,7 @@ public static class PlayerManager
             {
                 // This player slot is empty, Register to this slot
                 players[playerNumber] = new PlayerProfile(playerNumber, deviceID);
+                DeviceIDToPlayerNumber[deviceID] = playerNumber;
                 PlayerCount += 1;
                 return playerNumber;
             }

@@ -11,7 +11,7 @@ public class InputManager : MonoBehaviour
 
     [Header("Debug")]
     [Tooltip("Hard-codes routing: keyboard = player 1, any other device = player 2. Turn off to use PlayerManager's configured assignments.")]
-    [SerializeField] private bool debugDeviceRouting = true;
+
 
     public UnregisteredSerializableData<ControllerState>[] Controllers;
     // public Action ButtonEventEventHandler(ControllerState.ButtonTypes Button, int PlayerNumber, bool Pressed);
