@@ -21,14 +21,14 @@ public static class SerializableDataManager
         registered.Clear();
     }
 
-    public static void SaveAll(int tick)
+    public static void SaveAll(uint tick)
     {
         foreach ( ISerializable serializable in AllSerializableData)
         {
             serializable.Save(tick);
         }
     }
-    public static void LoadAll( int tick)
+    public static void LoadAll( uint tick)
     {
         foreach ( ISerializable serializable in AllSerializableData)
         {
@@ -39,8 +39,8 @@ public static class SerializableDataManager
 // Each serializable object
 public interface ISerializable
 {
-    public void Save(int tickIndex);
-    public void Load(int tickIndex);
+    public void Save(uint tickIndex);
+    public void Load(uint tickIndex);
 }
 
 [System.Serializable]
@@ -50,11 +50,11 @@ public class SerializableProperty<T> : ISerializable where T : unmanaged
     // Lets the owner react to a rollback load, which writes Value directly and bypasses any property setter
     public System.Action OnLoaded;
     private readonly T[] values = new T[TickManager._maxTicks];
-    public void Save(int tickIndex)
+    public void Save(uint tickIndex)
     {
         values[tickIndex] = Value;
     }
-    public void Load(int tickIndex)
+    public void Load(uint tickIndex)
     {
         Value = values[tickIndex];
         OnLoaded?.Invoke();
@@ -62,7 +62,7 @@ public class SerializableProperty<T> : ISerializable where T : unmanaged
     public SerializableProperty(){
         SerializableDataManager.Register(this);
     }
-    public T GetDataFromFrame(int tickIndex)
+    public T GetDataFromFrame(uint tickIndex)
     {
         return values[tickIndex];
     }
@@ -74,15 +74,15 @@ public class UnregisteredSerializableData<T> : ISerializable where T : unmanaged
 {
     public T Value;
     private readonly T[] values = new T[TickManager._maxTicks];
-    public void Save(int tickIndex)
+    public void Save(uint tickIndex)
     {
         values[tickIndex] = Value;
     }
-    public void Load(int tickIndex)
+    public void Load(uint tickIndex)
     {
         Value = values[tickIndex];
     }
-    public T GetDataFromFrame(int tickIndex)
+    public T GetDataFromFrame(uint tickIndex)
     {
         return values[tickIndex];
     }

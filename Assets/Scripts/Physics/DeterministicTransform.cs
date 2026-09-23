@@ -20,7 +20,7 @@ public class DeterministicTransform : MonoBehaviour
         }
     }
 
-    public DMVector PositionAtTickIndex(int tickIndex)
+    public DMVector PositionAtTickIndex(uint tickIndex)
     {
         return serializedPosition.GetDataFromFrame(tickIndex);
     }

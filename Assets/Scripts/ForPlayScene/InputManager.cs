@@ -4,6 +4,7 @@ using System.Linq;
 using Unity.Collections.LowLevel.Unsafe;
 using UnityEngine;
 using UnityEngine.InputSystem;
+using UnityEngine.SceneManagement;
 
 public class InputManager : MonoBehaviour
 {
@@ -19,6 +20,13 @@ public class InputManager : MonoBehaviour
     
     public void Start()
     {
+        // If there are no players registered and you can't register during runtime, go back to the player select
+
+        if (!PlayerManager.AllowPlayerFindingDuringPlay && PlayerManager.PlayerCount == 0)
+        {
+            SceneManager.LoadScene("LevelSelect");
+        }
+
         PlayerInput playerInput = GetComponent<PlayerInput>();
         playerInput.onActionTriggered += OnActionTriggered;
         Controllers = new UnregisteredSerializableData<ControllerState>[PlayerManager.MaxPlayerCount]; 
@@ -78,7 +86,7 @@ public class InputManager : MonoBehaviour
     }
     
 
-    public void SaveInputs(int tickIndex)
+    public void SaveInputs(uint tickIndex)
     {
         for (int i = 0; i < Controllers.Length; i++)
         {
@@ -88,7 +96,7 @@ public class InputManager : MonoBehaviour
         }
     }
 
-    public void LoadInputs(int TickIndex)
+    public void LoadInputs(uint TickIndex)
     {
         foreach(var controller in Controllers)
         {

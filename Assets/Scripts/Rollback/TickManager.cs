@@ -6,18 +6,21 @@ using UnityEngine;
 public class TickManager : MonoBehaviour
 {
     [SerializeField]
-    public static int _maxTicks = 20;
-    private static int _currentTick = 0;
-    
-    private static int _currentTickIndex= 0 ;
-    public static int CurrentTickIndex
+    public static uint _maxTicks = 20;
+    private uint _currentTick = 0;
+    private uint _latestAccessedTick = 0;
+    private uint _testRollbackTicks = 5; // You will rollback this many tick when debug rollback is pressed
+    private bool isRollingBack =false;
+    public bool Ready = false;
+    private uint _currentTickIndex= 0 ;
+    public uint CurrentTickIndex
     {
         get
         {
             return _currentTickIndex;
         }
     }
-    public static int CurrentTick
+    public uint CurrentTick
     {
         get
         {
@@ -65,23 +68,47 @@ public class TickManager : MonoBehaviour
         return tickables.ToArray();
     }
 
+    public void Update()
+    {
+        
+        // If the scene is not yet configured, skip frame
+        if (!Ready) return;
+        
+        // Serialize inputs for this frame
+        inputManager.SaveInputs(CurrentTickIndex);
+
+        // Decide if you are rolling back this frame
+        if (Input.GetKeyDown(KeyCode.R)) // For now, instead of comparing inputs, just press R to resimulate /rollback
+        {
+            // To roll back
+            isRollingBack = true;
+            CurrentTick = CurrentTick - _testRollbackTicks;
+
+            while (CurrentTick <= _latestAccessedTick) // Until you have resimulated to
+            {
+                SerializableDataManager.LoadAll(CurrentTick);
+                Tick();
+                CurrentTick += 1;
+            }
+
+        }
+        Tick();
+        _latestAccessedTick = CurrentTick;
+        CurrentTick += 1;
+        
+        // Once you are done making changes to position, you can update the deterministic transform followers (to be implemented)
+    }
+
     public void Tick()
     {
         // Serialize all serializable data
         SerializableDataManager.SaveAll(CurrentTickIndex);
-        // If you aren't rolling back, save the inputs
-        inputManager.SaveInputs(CurrentTickIndex);
-        // Then load the current index, regardless
         inputManager.LoadInputs(CurrentTickIndex);
-        // Tick each object
         foreach (var tickable in tickables)
         {
             tickable.Tick();
         }
-
-        // Then tick the physics manager
         physicsServer.Tick();
-        CurrentTick += 1;
     }
 }
 

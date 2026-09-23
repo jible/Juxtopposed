@@ -33,10 +33,7 @@ public class PlayManager : MonoBehaviour
     {
         // Every physics object has registered by now, so bucket them by layer
         physicsServer.RegisterPhysicsObjectsByLayer();
+        tickManager.Ready = true;
     }
 
-    public void Update()
-    {
-        tickManager.Tick();
-    }
 }
