@@ -14,6 +14,10 @@ public class PhysicsObject : MonoBehaviour
     public int mask;
     public int layer;
     public bool isStatic = false;
+    [Tooltip("Whether PhysicsShapeRenderer should draw this object's shape.")]
+    public bool renderShape = true;
+    [Tooltip("Color PhysicsShapeRenderer draws this object's shape with.")]
+    public Color renderColor = new Color(1f, 1f, 1f, 0.5f);
     public int physicsObjectID = -1;
     [DoNotSerialize, HideInInspector]
     public int visitStamp;

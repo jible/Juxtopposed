@@ -1,5 +1,7 @@
 using UnityEngine;
 using System.Collections.Generic;
+
+[ExecuteAlways]
 public class DeterministicTransform : MonoBehaviour
 {
     [SerializeField, HideInInspector]
@@ -16,6 +18,10 @@ public class DeterministicTransform : MonoBehaviour
         set
         {
             serializedPosition.Value = value;
+            if (!Application.isPlaying)
+            {
+                UpdateNormalTransformPosition();
+            }
             SetDirty();
         }
     }
@@ -72,10 +78,27 @@ public class DeterministicTransform : MonoBehaviour
     public void Awake()
     {
         serializedPosition.OnLoaded = SetDirty;
+        Register();
+
+    }
+
+    private void Register()
+    {
+        // Walk up the tree and register to the deterministic manager
+        // If you ever use this variable more than once, serialize it. For now im just doing this 
+        var manager = GetComponentInParent<DeterministicTransformManager>();
+        if (manager == null)
+        {
+            Debug.LogError("Deterministic Transform does not have Manager ancestor");
+        }
+        manager.RegisterTransform(this);
     }
 
     public void OnValidate()
     {
+        // Inspector edits write straight to serializedPosition's backing field and never
+        // go through the position setter, so push the transform update from here too.
+        UpdateNormalTransformPosition();
         SetDirty();
     }
 
@@ -117,5 +140,11 @@ public class DeterministicTransform : MonoBehaviour
             }
         }
         return children;
+    }
+
+    public void UpdateNormalTransformPosition()
+    {
+        Vector2 a = position.ToStandardVector();
+        transform.localPosition = new(a.x,a.y,0);
     }
 }

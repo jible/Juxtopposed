@@ -293,9 +293,24 @@ public struct DM64
         return DM64.FromRaw((raw >> SHIFT) << SHIFT);
     }
 
+    public DM64 Clamped(DM64 min, DM64 max)
+    {
+        if (min > max)
+        {
+            Debug.LogError("Min cannot be greater than max in clamped");
+        }
+        if (this < min) return min;
+        if (this > max) return max;
+        return this;
+    }
+
     public static DM64 Max(DM64 a, DM64 b)
     {
         return a > b ? a.copy() : b.copy();
+    }
+    public static DM64 Min(DM64 a, DM64 b)
+    {
+        return a < b ? a.copy() : b.copy();
     }
 
     // Powers

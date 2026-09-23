@@ -11,6 +11,10 @@ public struct DMVector
 
     // Constructors
     public static DMVector zero = new DMVector(0, 0);
+    public static DMVector Down = new DMVector(0, -1);
+    public static DMVector Up = new DMVector(0, 1);
+    public static DMVector Left = new DMVector(-1, 0);
+    public static DMVector Right = new DMVector(1, 0);
     public DMVector(DM64 _x, DM64 _y)
     {
         x = _x.copy();

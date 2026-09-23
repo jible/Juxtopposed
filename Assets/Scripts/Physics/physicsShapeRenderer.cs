@@ -30,6 +30,11 @@ public class PhysicsShapeRenderer : MonoBehaviour
                 continue;
             }
 
+            if (!i.renderShape)
+            {
+                continue;
+            }
+
             if (i.shape is Square s)
             {
                 RenderSquare(i,s);
@@ -40,6 +45,7 @@ public class PhysicsShapeRenderer : MonoBehaviour
     private void RenderSquare(PhysicsObject owner,Square s)
     {
         DeterministicTransform transform = owner.GetComponent<DeterministicTransform>();
+        Gizmos.color = owner.renderColor;
         Gizmos.DrawCube(transform.globalPosition.ToVector3(renderZAxis), s.size.ToVector3(renderThickness));
     }
 }

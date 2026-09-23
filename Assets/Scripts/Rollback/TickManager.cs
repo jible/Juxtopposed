@@ -33,6 +33,7 @@ public class TickManager : MonoBehaviour
         }
     }
     InputManager inputManager;
+    DeterministicTransformManager deterministicTransformManager;
     private ITickable[] tickables;
     static TickManager Instance;
     private PhysicsServer physicsServer;
@@ -41,6 +42,7 @@ public class TickManager : MonoBehaviour
     {
         Instance = this;
         inputManager = FindAnyObjectByType<InputManager>();
+        deterministicTransformManager = GetComponent<DeterministicTransformManager>();
         tickables = GetAllTickables(transform);
         physicsServer = GetComponent<PhysicsServer>();
     }
@@ -85,8 +87,10 @@ public class TickManager : MonoBehaviour
         Tick();
         _latestAccessedTick = CurrentTick;
         CurrentTick += 1;
-        
+
         // Once you are done making changes to position, you can update the deterministic transform followers (to be implemented)
+        deterministicTransformManager.UpdateTransforms();
+        
     }
 
     public void RollbackAndResimulate()

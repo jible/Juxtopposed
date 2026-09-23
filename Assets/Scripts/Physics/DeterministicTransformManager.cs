@@ -1,26 +1,27 @@
+using System.Collections.Generic;
+using Unity.VisualScripting;
 using UnityEngine;
 
 [ExecuteAlways]
 public class DeterministicTransformManager: MonoBehaviour
 {
-    DeterministicTransformManager Instance;
+    [DoNotSerialize]
+    List<DeterministicTransform>  allTransforms = new();
+    HashSet<DeterministicTransform> seenTransform = new();
 
-    public void Start()
+    public void RegisterTransform(DeterministicTransform dt)
     {
-        Instance = this;
+        // Maybe over kill to have a set and list but whatever
+        if (seenTransform.Contains(dt)) return;
+        seenTransform.Add(dt);
+        allTransforms.Add(dt);
     }
 
-    // Main or the physics server wil call this method
-    // It needs the right timing with other operations
-    public void PropagateGlobalChanges(Transform parent, DMVector parentGlobalPosition)
+    public void UpdateTransforms()
     {
-        foreach(Transform child in parent)
+        foreach (var dt in allTransforms)
         {
-            if (child.TryGetComponent<DeterministicTransform>(out var deterministicTransform))
-            {
-                deterministicTransform.globalPosition = parentGlobalPosition + deterministicTransform.position;
-                PropagateGlobalChanges(child, deterministicTransform.globalPosition);
-            }
+            dt.UpdateNormalTransformPosition();
         }
     }
 }
