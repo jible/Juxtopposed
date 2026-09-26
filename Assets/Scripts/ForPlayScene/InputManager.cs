@@ -100,7 +100,35 @@ public class InputManager : MonoBehaviour
             controller.Load(TickIndex);
         }
     }
+
+    public struct InputGetter
+    {
+        public int PlayerNumber;
+        private InputManager inputManager;
+        public InputGetter(int pn, InputManager _inputManager)
+        {
+            PlayerNumber = pn;
+            inputManager =_inputManager;
+        }
+
+        private ControllerState GetControllerState()
+        {
+            return inputManager.Controllers[PlayerNumber].Value;
+        }
+
+        public DMVector LeftStick(){
+            return GetControllerState().LeftStick.ToVector();
+        }
+        public DMVector RightStick(){
+            return GetControllerState().LeftStick.ToVector();
+        }
+        public bool isDown(ControllerState.ButtonTypes b){ return GetControllerState().GetButton(b);}
+        public bool justPressed(ControllerState.ButtonTypes b){ return GetControllerState().GetButton(b);}
+        public bool justReleased(ControllerState.ButtonTypes b){ return GetControllerState().GetButton(b);}
+    }
 }
+
+
 
 
 

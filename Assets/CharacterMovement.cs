@@ -1,18 +1,22 @@
-using System;
 using UnityEngine;
-using UnityEngine.Rendering;
 
-public class TestMovableRect : MonoBehaviour , ITickable
+public class CharacterMovement : MonoBehaviour, ITickable
 {
-    // Start is called once before the first execution of Update after the MonoBehaviour is created
-    [SerializeField]
-    private InputManager inputManager;
+    private InputManager.InputGetter inputGetter;
     PhysicsObject physicsObject;
+    Character character;
     public void Awake()
     {
         physicsObject= GetComponent<PhysicsObject>();
+        character = GetComponent<Character>();
         physicsObject.Colliding += onCollide;
     }
+
+    public void Config(InputManager.InputGetter inputGetter)
+    {
+        this.inputGetter = inputGetter;
+    }
+
 
     public void onCollide(PhysicsObject colA, PhysicsObject otherObj, DMVector side)
     {
@@ -24,7 +28,7 @@ public class TestMovableRect : MonoBehaviour , ITickable
     // Update is called once per frame
     public void Tick()
     {
-        DMVector stick = inputManager.Controllers[0].Value.LeftStick.ToVector();
+        DMVector stick = inputGetter.LeftStick();
 
         DM64 max = new DM64(2) / 60;
         physicsObject.velocity.Value.x += (stick.x /60) /2;
@@ -35,7 +39,7 @@ public class TestMovableRect : MonoBehaviour , ITickable
         physicsObject.velocity.Value.x =physicsObject.velocity.Value.x.Clamped(-max, max);
 
 
-        if (inputManager.Controllers[0].Value.GetButton(ControllerState.ButtonTypes.JUMP))
+        if (inputGetter.justPressed(ControllerState.ButtonTypes.JUMP))
         {
             physicsObject.velocity.Value.y += new DM64(3) / 60;
         }

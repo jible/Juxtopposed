@@ -84,12 +84,16 @@ public class DeterministicTransform : MonoBehaviour
 
     private void Register()
     {
+        // Prefab mode has no manager to join
+        if (EditorContext.IsInPrefabStage(gameObject)) return;
+
         // Walk up the tree and register to the deterministic manager
-        // If you ever use this variable more than once, serialize it. For now im just doing this 
+        // If you ever use this variable more than once, serialize it. For now im just doing this
         var manager = GetComponentInParent<DeterministicTransformManager>();
         if (manager == null)
         {
             Debug.LogError("Deterministic Transform does not have Manager ancestor");
+            return;
         }
         manager.RegisterTransform(this);
     }

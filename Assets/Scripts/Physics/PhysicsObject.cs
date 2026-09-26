@@ -11,13 +11,24 @@ public class PhysicsObject : MonoBehaviour
     public Shape shape;
     [DoNotSerialize, HideInInspector]
     public SerializableProperty<DMVector> velocity;
-    public int mask;
-    public int layer;
+    /// <summary>
+    /// The Mask is what layer this object "sees". For collision, the non-static object should 
+    /// be mask the static one
+    /// </summary>
+    [Tooltip("The Mask is what layer this object \"sees\". For collision, the non-static object should be mask the static one")]
+    public int Mask;
+    /// <summary>
+    /// The Layer is what layer this object exists on. 
+    /// For collision, the static object should be masked by the static one
+    /// </summary>
+    [Tooltip("The Layer is what layer this object exists on. For collision, the static object should be masked by the static one")]
+    public int Layer;
     public bool isStatic = false;
     [Tooltip("Whether PhysicsShapeRenderer should draw this object's shape.")]
     public bool renderShape = true;
     [Tooltip("Color PhysicsShapeRenderer draws this object's shape with.")]
     public Color renderColor = new Color(1f, 1f, 1f, 0.5f);
+    [HideInInspector]
     public int physicsObjectID = -1;
     [DoNotSerialize, HideInInspector]
     public int visitStamp;
@@ -98,6 +109,8 @@ public class PhysicsObject : MonoBehaviour
 
     public void Awake()
     {
+        // Prefab mode has no registry to join
+        if (EditorContext.IsInPrefabStage(gameObject)) return;
         physicsObjectRegistry.Register(this);
     }
 
@@ -105,6 +118,7 @@ public class PhysicsObject : MonoBehaviour
     // Register is a no-op if already registered.
     public void OnEnable()
     {
+        if (EditorContext.IsInPrefabStage(gameObject)) return;
         physicsObjectID = physicsObjectRegistry.Register(this);
     }
 

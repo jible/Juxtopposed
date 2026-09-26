@@ -43,10 +43,15 @@ public class TickManager : MonoBehaviour
         Instance = this;
         inputManager = FindAnyObjectByType<InputManager>();
         deterministicTransformManager = GetComponent<DeterministicTransformManager>();
-        tickables = GetAllTickables(transform);
         physicsServer = GetComponent<PhysicsServer>();
     }
     
+    // Called by the play manager once every tickable exists, including spawned characters
+    public void CollectTickables()
+    {
+        tickables = GetAllTickables(transform);
+    }
+
     private ITickable[] GetAllTickables(Transform parent)
     {
         Queue<Transform> queue = new();

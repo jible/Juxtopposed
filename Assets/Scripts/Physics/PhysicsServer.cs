@@ -67,7 +67,7 @@ public class PhysicsServer : MonoBehaviour
         {
             for (int i = 0; i < buckets.Length; i++)
             {
-                if ((obj.layer & (1 << i)) != 0)
+                if ((obj.Layer & (1 << i)) != 0)
                 {
                     buckets[i].Add(obj);
                 }
@@ -137,7 +137,7 @@ public class PhysicsServer : MonoBehaviour
             for (int layerIndex = 0; layerIndex < StaticBucketByLayer.Length; layerIndex++)
             {
                 // Skip layers this object doesn't mask
-                if ((A.mask & (1 << layerIndex)) == 0) continue;
+                if ((A.Mask & (1 << layerIndex)) == 0) continue;
                 foreach (var B in StaticBucketByLayer[layerIndex])
                 {
                     if (!B.isActive || B.visitStamp == stamp) continue;
@@ -157,7 +157,7 @@ public class PhysicsServer : MonoBehaviour
             int stamp = ++Stamp;
             for (int layerIndex = 0; layerIndex < BucketByLayer.Length; layerIndex++)
             {
-                if ((A.mask & (1 << layerIndex)) == 0) continue;
+                if ((A.Mask & (1 << layerIndex)) == 0) continue;
                 foreach (var B in BucketByLayer[layerIndex])
                 {
                     if (A == B || !B.isActive || B.visitStamp == stamp) continue;

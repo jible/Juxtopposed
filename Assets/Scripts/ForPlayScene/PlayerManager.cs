@@ -23,10 +23,39 @@ public static class PlayerManager
         // Add listener for any input
         // InputSystem.onAnyButtonPress.Call(OnPlayerInput);
     }
+    public static void Clear()
+    {
+        for (int playerNumber = 0; playerNumber < MaxPlayerCount; playerNumber++)
+        {
+            players[playerNumber] = null;
+        }
+        DeviceIDToPlayerNumber.Clear();
+        PlayerCount = 0;
+    }
+
+    // Fills a player slot without a controller. A controller attaches to it once it registers
+    public static void AddPlayer(int playerNumber, CharacterId character)
+    {
+        if (players[playerNumber] == null) PlayerCount += 1;
+        players[playerNumber] = new PlayerProfile(playerNumber, character);
+    }
+
     public static int RegisterController(int deviceID)
     {
         // If the controller is already used, return
         if (DeviceIDToPlayerNumber.ContainsKey(deviceID)) return -1;
+
+        // Attach to a player that is waiting for a controller
+        for (int playerNumber = 0; playerNumber < MaxPlayerCount; playerNumber++)
+        {
+            if (players[playerNumber] != null && !players[playerNumber].HasDevice)
+            {
+                players[playerNumber].DeviceID = deviceID;
+                DeviceIDToPlayerNumber[deviceID] = playerNumber;
+                return playerNumber;
+            }
+        }
+
         // If we are at max player count we can't register more controllers, return -1
         if (PlayerCount == MaxPlayerCount) return -1;
 
@@ -36,7 +65,7 @@ public static class PlayerManager
             if (players[playerNumber] == null)
             {
                 // This player slot is empty, Register to this slot
-                players[playerNumber] = new PlayerProfile(playerNumber, deviceID);
+                players[playerNumber] = new PlayerProfile(playerNumber, default) { DeviceID = deviceID };
                 DeviceIDToPlayerNumber[deviceID] = playerNumber;
                 PlayerCount += 1;
                 return playerNumber;
@@ -44,21 +73,25 @@ public static class PlayerManager
         }
         return -1;
     }
-    
+
 
 }
 
 public class PlayerProfile
 {
-    int PlayerNumber;
+    public const int NoDevice = -1;
+
+    public readonly int PlayerNumber;
+    public CharacterId Character;
     // Add Control Scheme at some point
     // input device
-    int DeviceID;
+    public int DeviceID = NoDevice;
+    public bool HasDevice => DeviceID != NoDevice;
 
-    public PlayerProfile(int playerNumber, int deviceID)
+    public PlayerProfile(int playerNumber, CharacterId character)
     {
         PlayerNumber = playerNumber;
-        DeviceID = deviceID;
+        Character = character;
     }
 
 }
