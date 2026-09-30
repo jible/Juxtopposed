@@ -8,6 +8,8 @@ public class TickManager : MonoBehaviour
 {
     [SerializeField]
     public static uint _maxTicks = 20;
+    // Gameplay values are per second, this converts them to per tick
+    public const int TicksPerSecond = 60;
     private uint _currentTick = 0;
     private uint _latestAccessedTick = 0;
     private uint _testRollbackTicks = 5; // You will rollback this many tick when debug rollback is pressed

@@ -5,6 +5,9 @@ public enum CharacterStateId : byte
 {
     Idle,
     Walk,
+    Jump,
+    Fall,
+    Turn
 }
 
 // Everything the state machine needs to roll back. Kept unmanaged so it fits in a SerializableProperty
@@ -19,7 +22,10 @@ public class CharacterStateMachine
     // One instance of each state, shared by every character. States must not hold data, per character data belongs on the Character
     private static readonly CharacterState[] states = BuildStateTable(
         new IdleState(),
-        new WalkState()
+        new WalkState(),
+        new JumpState(),
+        new FallState(),
+        new TurnState()
     );
 
     private static CharacterState[] BuildStateTable(params CharacterState[] stateList)
@@ -43,10 +49,10 @@ public class CharacterStateMachine
     private readonly SerializableProperty<CharacterStateData> data = new();
     // Only lives for the duration of a tick, so it doesn't need to be rolled back
     private bool changedThisTick;
-
+    public Action<CharacterStateId> StateChanged;
     public CharacterStateId CurrentStateId => data.Value.Id;
     public uint TicksInState => data.Value.TicksInState;
-    private CharacterState CurrentState => states[(int)data.Value.Id];
+    public CharacterState CurrentState => states[(int)data.Value.Id];
 
     public CharacterStateMachine(Character character, CharacterStateId startingState)
     {
@@ -65,6 +71,7 @@ public class CharacterStateMachine
         data.Value = new CharacterStateData { Id = id, TicksInState = 0 };
         changedThisTick = true;
         CurrentState.EnterState(this);
+        StateChanged.Invoke(id);
     }
 
     public void Tick()
@@ -86,11 +93,13 @@ public abstract class CharacterState
     public virtual void EnterState(CharacterStateMachine machine) { }
     public virtual void ExitState(CharacterStateMachine machine) { }
     public virtual void Tick(CharacterStateMachine machine) { }
-
+    public virtual void OnAnimFinished(CharacterStateMachine machine) { }
+    public abstract bool ApplyGravity {get;}
     /*
     Paste this into a class to get the defaults:
 
     public override CharacterStateId Id => CharacterStateId.;
+    public override bool ApplyGravity => ;
     public override void EnterState(CharacterStateMachine machine) { }
     public override void ExitState(CharacterStateMachine machine) { }
     public override void Tick(CharacterStateMachine machine) { }

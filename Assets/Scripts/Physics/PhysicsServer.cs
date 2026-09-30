@@ -117,13 +117,14 @@ public class PhysicsServer : MonoBehaviour
     private readonly List<TriggerEvent> triggerEvents = new();
 
 
+    // Velocity is in units per second, this is the only place it's converted to units per tick
     private void ApplyVelocity(Axis axis)
     {   
         foreach (var physicsObject in physicsObjectRegistry.All)
             {
                 var x = axis == Axis.X?physicsObject.velocity.Value.x: new DM64(0);
                 var y = axis == Axis.Y?physicsObject.velocity.Value.y: new DM64(0);
-                physicsObject.deterministicTransform.position += new DMVector( x, y );
+                physicsObject.deterministicTransform.position += new DMVector( x, y ) / TickManager.TicksPerSecond;
             }
     }
 

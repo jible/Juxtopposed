@@ -1,10 +1,24 @@
+using Unity.VisualScripting;
 using UnityEngine;
 
-public class CharacterMovement : MonoBehaviour, ITickable
+// Ticked by Character after its state machine, so a jump impulse from a state lands before gravity and clamping
+public class CharacterMovement : MonoBehaviour
 {
     private InputManager.InputGetter inputGetter;
     PhysicsObject physicsObject;
     Character character;
+    // Set by a downward collision during the physics step, read by states on the next tick
+    private readonly SerializableProperty<bool> grounded = new();
+    public bool IsGrounded => grounded.Value;
+    private readonly SerializableProperty<int> usedAirJumps = new();
+    private CharacterData Data => character.Data;
+    // Horizontal max depends on whether we're grounded, vertical max is the fall speed cap
+    private DMVector MaxVelocity => new(IsGrounded ? Data.Ground.MaxVelocity : Data.Air.MaxVelocity, Data.Air.MaxFallVelocity);
+    // Stick x in the range [-1, 1]
+    private DM64 InputX => inputGetter.LeftStick().x / StickState.MAX_STICK_AXIS_VALUE;
+    // Turns a per second rate (acceleration, friction) into how much of it applies this tick
+    private static DM64 PerTick(DM64 perSecond) => perSecond / TickManager.TicksPerSecond;
+
     public void Awake()
     {
         physicsObject= GetComponent<PhysicsObject>();
@@ -23,30 +37,116 @@ public class CharacterMovement : MonoBehaviour, ITickable
         if (side == DMVector.Down)
         {
             physicsObject.velocity.Value.y = new(0);
+            grounded.Value = true;
+            usedAirJumps.Value = 0;
         }
     }
-    // Update is called once per frame
+
+    public bool CanJump => IsGrounded || usedAirJumps.Value < Data.Jump.AirJumps;
+
+    public void Jump()
+    {
+        ref DMVector velocity = ref physicsObject.velocity.Value;
+        if (IsGrounded)
+        {
+            velocity.y = Data.Jump.Velocity;
+        }
+        else if (usedAirJumps.Value < Data.Jump.AirJumps)
+        {
+            velocity.y = Data.Jump.Velocity;
+            usedAirJumps.Value++;
+            AddCappedImpulse(new DMVector(Data.Jump.AirHorizontalImpulse * InputX.Sign(), new DM64(0)));
+        }
+    }
+
+    public void StandardMovement()
+    {
+        DM64 input = InputX;
+        if (input == 0) return;
+
+        ref DMVector velocity = ref physicsObject.velocity.Value;
+        DM64 acceleration = IsGrounded ? Data.Ground.Acceleration : Data.Air.Acceleration;
+        DM64 max = MaxVelocity.x;
+        if (velocity.x.Abs() < max)
+        {
+            velocity.x = (velocity.x + PerTick(acceleration) * input).Clamped(-max, max);
+        }
+    }
+
+    public void GroundedTurnAroundKick()
+    {
+        ref DMVector velocity = ref physicsObject.velocity.Value;
+        DM64 acceleration = IsGrounded ? Data.Ground.Acceleration : Data.Air.Acceleration;
+
+        DM64 input = InputX;
+        DM64 turnaround = Data.Ground.TurnaroundMultiplier;
+        velocity.x += PerTick(acceleration) * input.Sign() * turnaround;
+    }
+
+    // Only slows down with no input, or when something like knockback pushed past the max
+    public void StandardDrag()
+    {
+        if (InputX == 0 || physicsObject.velocity.Value.x.Abs() > MaxVelocity.x)
+        {
+            ApplyDrag();
+        }
+    }
+
+    public void ApplyDrag()
+    {
+        DM64 friction = IsGrounded ? Data.Ground.Friction : Data.Air.Friction;
+        physicsObject.velocity.Value.x -= physicsObject.velocity.Value.x * PerTick(friction);
+    }
+
+    public void StandardGravity()
+    {
+        if (IsGrounded) return;
+        ref DMVector velocity = ref physicsObject.velocity.Value;
+        velocity.y = DM64.Max(velocity.y - PerTick(Data.Air.FallAcceleration), -Data.Air.MaxFallVelocity);
+    }
+
+    // Won't push an axis past its max, but won't slow down an axis that's already over it either
+    public void AddCappedImpulse(DMVector impulse)
+    {
+        ref DMVector velocity = ref physicsObject.velocity.Value;
+        DMVector max = MaxVelocity;
+        velocity.x = CappedAdd(velocity.x, impulse.x, max.x);
+        velocity.y = CappedAdd(velocity.y, impulse.y, max.y);
+    }
+
+    private static DM64 CappedAdd(DM64 current, DM64 impulse, DM64 max)
+    {
+        if (impulse == 0) return current;
+        bool sameDirection = impulse.Sign() == current.Sign();
+        if (sameDirection && current.Abs() >= max) return current;
+
+        DM64 result = current + impulse;
+        // Slowing down without flipping direction is always allowed
+        if (!sameDirection && result.Sign() == current.Sign()) return result;
+        return result.Clamped(-max, max);
+    }
+
+    public void AddUncappedImpulse(DMVector impulse)
+    {
+        physicsObject.velocity.Value += impulse;
+    }
+
+    public void SetUncappedVelocity(DMVector velocity)
+    {
+        physicsObject.velocity.Value = velocity;
+    }
+
     public void Tick()
     {
-        DMVector stick = inputGetter.LeftStick();
-
-        DM64 max = new DM64(2) / 60;
-        physicsObject.velocity.Value.x += (stick.x /60) /2;
-
-        // deteriorate the speed
-        physicsObject.velocity.Value.x *= new DM64(9) /10;
-
-        physicsObject.velocity.Value.x =physicsObject.velocity.Value.x.Clamped(-max, max);
-
-
-        if (inputGetter.justPressed(ControllerState.ButtonTypes.JUMP))
-        {
-            physicsObject.velocity.Value.y += new DM64(3) / 60;
-        }
+        StandardMovement();
+        StandardDrag();
 
         // Apply gravity
-        physicsObject.velocity.Value.y -= new DM64(1) / 2 / 60; // 1 meter per second/ per second?
-        physicsObject.velocity.Value.y =physicsObject.velocity.Value.y.Clamped(-max, max);
+        StandardGravity();
+
+        // Cleared last so everything above sees the previous physics step's result.
+        // The physics step after this sets it again if we're still standing on something
+        grounded.Value = false;
 
     }
 }
