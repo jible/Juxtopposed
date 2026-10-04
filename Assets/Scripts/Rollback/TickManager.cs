@@ -35,7 +35,6 @@ public class TickManager : MonoBehaviour
         }
     }
     InputManager inputManager;
-    DeterministicTransformManager deterministicTransformManager;
     private ITickable[] tickables;
     static TickManager Instance;
     private PhysicsServer physicsServer;
@@ -44,10 +43,9 @@ public class TickManager : MonoBehaviour
     {
         Instance = this;
         inputManager = FindAnyObjectByType<InputManager>();
-        deterministicTransformManager = GetComponent<DeterministicTransformManager>();
         physicsServer = GetComponent<PhysicsServer>();
     }
-    
+
     // Called by the play manager once every tickable exists, including spawned characters
     public void CollectTickables()
     {
@@ -95,9 +93,9 @@ public class TickManager : MonoBehaviour
         _latestAccessedTick = CurrentTick;
         CurrentTick += 1;
 
-        // Once you are done making changes to position, you can update the deterministic transform followers (to be implemented)
-        deterministicTransformManager.UpdateTransforms();
-        
+        // Once you are done making changes to position, push them to the unity transforms
+        DeterministicTransformRegistry.SyncAll();
+
     }
 
     public void RollbackAndResimulate()

@@ -78,24 +78,15 @@ public class DeterministicTransform : MonoBehaviour
     public void Awake()
     {
         serializedPosition.OnLoaded = SetDirty;
-        Register();
-
+        // Awake, not OnEnable, so the component's enabled checkbox has no effect on syncing.
+        // Edit mode is synced by the position setter and OnValidate instead
+        if (Application.isPlaying) DeterministicTransformRegistry.Add(this);
     }
 
-    private void Register()
+    public void OnDestroy()
     {
-        // Prefab mode has no manager to join
-        if (EditorContext.IsInPrefabStage(gameObject)) return;
-
-        // Walk up the tree and register to the deterministic manager
-        // If you ever use this variable more than once, serialize it. For now im just doing this
-        var manager = GetComponentInParent<DeterministicTransformManager>();
-        if (manager == null)
-        {
-            Debug.LogError("Deterministic Transform does not have Manager ancestor");
-            return;
-        }
-        manager.RegisterTransform(this);
+        // Also runs on scene unload, so the registry never holds dead transforms
+        DeterministicTransformRegistry.Remove(this);
     }
 
     public void OnValidate()

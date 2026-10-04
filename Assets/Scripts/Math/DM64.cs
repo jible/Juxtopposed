@@ -43,6 +43,8 @@ public struct DM64
         return (long)(f * (float)SCALE);
     }
 
+    public long RawValue => raw;
+
     public static DM64 FromRaw(long r)
     {
         DM64 o = new();

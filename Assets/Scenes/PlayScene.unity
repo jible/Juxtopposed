@@ -622,7 +622,6 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 1010068963}
-  - component: {fileID: 1010068962}
   - component: {fileID: 1010068966}
   - component: {fileID: 1010068965}
   - component: {fileID: 1010068964}
@@ -635,18 +634,6 @@ GameObject:
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
   m_IsActive: 1
---- !u!114 &1010068962
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1010068961}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 3f29287a4d631974a8948c9336a2797f, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::DeterministicTransformManager
 --- !u!4 &1010068963
 Transform:
   m_ObjectHideFlags: 0
