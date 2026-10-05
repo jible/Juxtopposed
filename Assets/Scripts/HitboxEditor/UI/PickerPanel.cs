@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
@@ -39,5 +40,41 @@ public class PickerPanel : MonoBehaviour
         boxDropdown.onValueChanged.AddListener(index => BoxSelected?.Invoke(index));
         addBoxButton.onClick.AddListener(() => AddBoxClicked?.Invoke());
         removeBoxButton.onClick.AddListener(() => RemoveBoxClicked?.Invoke());
+    }
+
+    // Showing never raises the selection events
+
+    public void ShowCharacters(List<string> names, int selected)
+    {
+        Fill(characterDropdown, names, selected);
+    }
+
+    public void ShowStates(List<string> names, int selected)
+    {
+        Fill(stateDropdown, names, selected);
+    }
+
+    // Disabled when the selected box can not have a hit group
+    public void ShowHitGroups(List<string> names, int selected, bool enabled)
+    {
+        Fill(hitGroupDropdown, names, selected);
+        hitGroupDropdown.interactable = enabled;
+        addHitGroupButton.interactable = enabled;
+        removeHitGroupButton.interactable = enabled && selected > 0;
+    }
+
+    public void ShowBoxes(List<string> names, int selected)
+    {
+        Fill(boxDropdown, names, selected);
+        boxDropdown.interactable = names.Count > 0;
+        removeBoxButton.interactable = selected >= 0;
+    }
+
+    private static void Fill(TMP_Dropdown dropdown, List<string> names, int selected)
+    {
+        dropdown.ClearOptions();
+        dropdown.AddOptions(names);
+        dropdown.SetValueWithoutNotify(Mathf.Max(0, selected));
+        dropdown.RefreshShownValue();
     }
 }

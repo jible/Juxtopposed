@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using TMPro;
 using UnityEngine;
 
@@ -28,5 +29,32 @@ public class BoxPropertiesPanel : MonoBehaviour
         widthInput.onEndEdit.AddListener(text => WidthEdited?.Invoke(text));
         heightInput.onEndEdit.AddListener(text => HeightEdited?.Invoke(text));
         damageInput.onEndEdit.AddListener(text => DamageEdited?.Invoke(text));
+    }
+
+    // Showing never raises the edit events. Damage belongs to the box's hit group, so it is disabled without one
+    public void Show(bool hasBox, string name, List<string> types, int type, List<string> parents, int parent,
+        string width, string height, string damage, bool hasDamage)
+    {
+        nameInput.SetTextWithoutNotify(name);
+        Fill(typeDropdown, types, type);
+        Fill(parentDropdown, parents, parent);
+        widthInput.SetTextWithoutNotify(width);
+        heightInput.SetTextWithoutNotify(height);
+        damageInput.SetTextWithoutNotify(damage);
+
+        nameInput.interactable = hasBox;
+        typeDropdown.interactable = hasBox;
+        parentDropdown.interactable = hasBox;
+        widthInput.interactable = hasBox;
+        heightInput.interactable = hasBox;
+        damageInput.interactable = hasBox && hasDamage;
+    }
+
+    private static void Fill(TMP_Dropdown dropdown, List<string> names, int selected)
+    {
+        dropdown.ClearOptions();
+        dropdown.AddOptions(names);
+        dropdown.SetValueWithoutNotify(Mathf.Max(0, selected));
+        dropdown.RefreshShownValue();
     }
 }

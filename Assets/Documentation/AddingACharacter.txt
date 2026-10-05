@@ -1,0 +1,108 @@
+ADDING A CHARACTER
+==================
+
+Everything you have to touch to add a new character, in order.
+<Name> below is the character's name, e.g. Platty.
+
+
+1. CharacterId enum
+   File: Assets/Scripts/Character/Roster/Roster.cs
+
+   - Add <Name> to the CharacterId enum.
+   - Add it at the END. Never reorder or delete entries. Unity saves enums as their number
+     (scenes, prefabs, the PlayManager debug slots) and so will netplay, so reordering silently
+     swaps characters everywhere.
+   - The enum is a byte, so the limit is 256 characters.
+
+
+2. Roster data file
+   File: Assets/Scripts/Character/Roster/<Name>.cs  (new)
+
+   - Copy Platty.cs and rename it.
+   - Declare a field on the partial Roster class:
+         public static readonly CharacterData <Name> = new() { ... };
+   - Only list the values that differ from the defaults. The defaults and the full list of
+     settings are in Assets/Scripts/Character/Data/CharacterData.cs.
+
+
+3. Register in Roster.Get
+   File: Assets/Scripts/Character/Roster/Roster.cs
+
+   - Add a case to the switch in Roster.Get:
+         CharacterId.<Name> => <Name>,
+   - If you forget, the game throws "No data registered for <Name>" when the character spawns.
+
+
+   Every file for a character lives in ONE folder:  Assets/Resources/Characters/<Name>/
+   The folder name must match the CharacterId name exactly (case included).
+
+
+4. Hitbox data (character JSON)
+   File: Assets/Resources/Characters/<Name>/<Name>.character.json
+
+   - You don't write this by hand. Open the hitbox editor, pick <Name> in the character
+     dropdown and press Save. The folder and file are created on the first save.
+   - The file name must match the CharacterId name exactly (case included).
+   - States in the file are keyed by CharacterStateId NAME, so renaming a state in the enum
+     orphans its data in every character file. Rename the key in the JSON files too.
+
+
+5. Sprite art (sprite characters)
+   Folder: Assets/Resources/Characters/<Name>/
+
+   - One sheet per animation, named after the animation: Idle.png, Walk.png, ...
+   - Import settings: Sprite Mode = Multiple, then slice it in the Sprite Editor. Frames play in
+     slice order (<sheet>_0, <sheet>_1, ...), so slice left to right, top to bottom.
+   - Draw the art facing right. It is flipped for left.
+   - Which sheet a state plays is the state's Animation field in the hitbox editor. The sheet's
+     frames are spread evenly over the state's Length, so set Length to change the speed.
+   - A state with no hitbox data yet plays the sheet named after the state (Idle.png for Idle)
+     at 6 ticks per frame, so you can see new art before setting the state up.
+   - Don't name a sheet "<Name>.character" or "<Name>.skeleton".
+   - For a 3D model, set Visuals.Kind = VisualKind.Model in the Roster file, once models are supported.
+
+
+6. Baked skeleton (model characters only)
+   File: Assets/Resources/Characters/<Name>/<Name>.skeleton.json
+
+   - Sprite characters skip this.
+   - Holds bone positions per tick for each animation, so boxes can follow bones.
+   - Animation names in it must match the Animation field of each state in the character JSON.
+   - NOT BUILT YET: there is no baker, so this file can't be generated yet.
+     Without it the editor still works, but every box is parented to the root.
+
+
+7. Things that don't exist yet (check these when the systems are built)
+
+   - Player customizations: in a build, saving writes to persistentDataPath/Characters/<Name>/
+     and that copy is loaded instead of the shipped one. Nothing in a build saves yet.
+   - Runtime hitboxes: the game loads the character JSON (for animations) but doesn't use the
+     boxes for collision yet.
+   - Models: VisualKind.Model needs a ModelCharacterView (an ICharacterView) and the skeleton baker.
+   - Character select: no menu lists characters yet. For now, pick the character in the
+     PlayManager debug player slots in the play scene.
+
+
+SHARED THINGS (only when adding a new STATE, not a character)
+-------------------------------------------------------------
+
+States are shared by every character, so a new move or state means:
+
+   - Add it to CharacterStateId in Assets/Scripts/Character/CharacterStateMachine.cs.
+     Values must stay contiguous from 0, so don't assign numbers by hand.
+   - Write the state class in Assets/Scripts/Character/CharacterStates.cs.
+   - Add an instance to the BuildStateTable(...) call in CharacterStateMachine.
+     If you forget, the game throws "No state registered for <State>" on startup.
+   - It shows up in the hitbox editor's state dropdown automatically.
+
+
+CHECKLIST
+---------
+
+   [ ] CharacterId entry added at the end of the enum
+   [ ] Roster/<Name>.cs created with its CharacterData
+   [ ] Roster.Get case added
+   [ ] Character JSON saved from the hitbox editor
+   [ ] Sprite sheets in Resources/Characters/<Name>/, sliced, one per animation
+   [ ] Skeleton baked (model characters, once the baker exists)
+   [ ] Tested by picking it in the PlayManager debug slots

@@ -1,6 +1,5 @@
 using System;
 using System.Collections.Generic;
-using System.IO;
 using UnityEngine;
 
 // Back end of the hitbox editor. Holds one character's files and is the only thing that edits them,
@@ -34,33 +33,12 @@ public class HitboxEditorManager : MonoBehaviour
 
     // ---------- Files ----------
 
-    // Files live under Assets/Characters/<id>/ for now. Builds will need them moved somewhere loadable
-    public static string CharacterPath(CharacterId id) => Path.Combine(Application.dataPath, "Characters", id.ToString(), $"{id}.character.json");
-    public static string SkeletonPath(CharacterId id) => Path.Combine(Application.dataPath, "Characters", id.ToString(), $"{id}.skeleton.json");
-
     // A character with no file yet starts empty, and gets one on the first save
     public void LoadCharacter(CharacterId id)
     {
         characterId = id;
-        string characterPath = CharacterPath(id);
-        Loaded = File.Exists(characterPath)
-            ? CharacterFileJson.ReadCharacter(File.ReadAllText(characterPath))
-            : new CharacterFile();
-
-        string skeletonPath = SkeletonPath(id);
-        Skeleton = File.Exists(skeletonPath)
-            ? CharacterFileJson.ReadSkeleton(File.ReadAllText(skeletonPath))
-            : null;
-
-        // Hand edited files may have keys out of order, and every edit below assumes they are sorted
-        foreach (var state in Loaded.States.Values)
-        {
-            foreach (var box in state.Boxes)
-            {
-                BoxKeyMath.Sort(box.Keys);
-            }
-        }
-
+        Loaded = CharacterFiles.ReadCharacter(id);
+        Skeleton = CharacterFiles.ReadSkeleton(id);
         definition = null;
         HasUnsavedChanges = false;
         Changed?.Invoke();
@@ -68,9 +46,7 @@ public class HitboxEditorManager : MonoBehaviour
 
     public void Save()
     {
-        string path = CharacterPath(characterId);
-        Directory.CreateDirectory(Path.GetDirectoryName(path));
-        File.WriteAllText(path, CharacterFileJson.WriteCharacter(Loaded));
+        CharacterFiles.WriteCharacter(characterId, Loaded);
         HasUnsavedChanges = false;
         Changed?.Invoke();
     }
@@ -196,6 +172,35 @@ public class HitboxEditorManager : MonoBehaviour
     {
         BakedAnimation animation = GetAnimation(GetState(stateName));
         return animation != null ? (IEnumerable<string>)animation.Bones.Keys : Array.Empty<string>();
+    }
+
+    // Every box in the state as the game sees it on a frame, for the preview: ids, and the matching data at the same index.
+    // Read from the built definition, so keys are blended and bone offsets applied. Both arrays are empty for a state with no data
+    public void GetHitboxData(string stateName, int frame, out int[] hitboxIds, out HitboxPreviewData[] hitboxData)
+    {
+        StateDefinition state = Definition.GetState(stateName);
+        if (state == null)
+        {
+            hitboxIds = Array.Empty<int>();
+            hitboxData = Array.Empty<HitboxPreviewData>();
+            return;
+        }
+
+        frame = Mathf.Clamp(frame, 0, state.Length - 1);
+        hitboxIds = new int[state.Boxes.Length];
+        hitboxData = new HitboxPreviewData[state.Boxes.Length];
+        for (int i = 0; i < state.Boxes.Length; i++)
+        {
+            BoxDefinition box = state.Boxes[i];
+            hitboxIds[i] = box.Id;
+            hitboxData[i] = new HitboxPreviewData
+            {
+                Type = box.Type,
+                Center = box.CenterAt(frame).ToStandardVector(),
+                Size = box.SizeAt(frame).ToStandardVector(),
+                Active = box.IsActive(frame),
+            };
+        }
     }
 
     // ---------- Keys ----------

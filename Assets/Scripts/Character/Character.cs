@@ -10,6 +10,10 @@ public class Character : MonoBehaviour, ITickable
     public InputManager.InputGetter inputGetter;
     public int PlayerIndex { get; private set; }
     public CharacterData Data { get; private set; }
+    // Hitboxes and the animation each state plays, from the hitbox editor's files
+    public CharacterDefinition Definition { get; private set; }
+    // Null until configured
+    public ICharacterView View { get; private set; }
 
     public PhysicsObject PhysicsObject { get; private set; }
     public DeterministicTransform DeterministicTransform { get; private set; }
@@ -52,6 +56,8 @@ public class Character : MonoBehaviour, ITickable
     public void Configure(CharacterId characterId, int playerIndex, InputManager inputManager, DMVector spawnPosition, Direction direction = Direction.Left)
     {
         Data = Roster.Get(characterId);
+        Definition = CharacterFiles.LoadDefinition(characterId);
+        View = CreateView(characterId);
         PlayerIndex = playerIndex;
         this.inputManager = inputManager;
         DeterministicTransform.position = spawnPosition;
@@ -67,6 +73,38 @@ public class Character : MonoBehaviour, ITickable
         StateMachine.Tick();
         characterMovement.Tick();
         currentState = StateMachine.CurrentStateId;
+    }
+
+    // After the tick manager's Update, so it draws the final state of this frame, including any rollback
+    public void LateUpdate()
+    {
+        if (View == null) return;
+
+        CharacterStateId stateId = StateMachine.CurrentStateId;
+        StateDefinition state = Definition.GetState(stateId);
+        if (state != null && !string.IsNullOrEmpty(state.Animation))
+        {
+            View.Show(state.Animation, state.FrameAt(StateMachine.TicksInState), state.Length, direction);
+        }
+        else
+        {
+            // No authored data yet, so play the sheet named after the state
+            View.Show(stateId.ToString(), (int)StateMachine.TicksInState, 0, direction);
+        }
+    }
+
+    private ICharacterView CreateView(CharacterId characterId)
+    {
+        switch (Data.Visuals.Kind)
+        {
+            case VisualKind.Sprite:
+                var view = gameObject.AddComponent<SpriteCharacterView>();
+                view.Configure(CharacterFiles.ResourceFolder(characterId));
+                return view;
+            default:
+                Debug.LogError($"{characterId} uses {Data.Visuals.Kind} visuals, which aren't supported yet");
+                return null;
+        }
     }
 
     public void onDirectionUpdated()

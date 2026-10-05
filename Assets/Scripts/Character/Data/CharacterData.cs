@@ -10,6 +10,23 @@ public class CharacterData
     public GroundMovementData Ground = new();
     public AirMovementData Air = new();
     public JumpData Jump = new();
+    public VisualData Visuals = new();
+}
+
+public enum VisualKind
+{
+    // One sheet per animation, sliced into sprites in frame order
+    Sprite,
+    // Not supported yet
+    Model,
+}
+
+// How the character is drawn. Display only, nothing here affects the game.
+// The art lives with the character's other files, see CharacterFiles
+[Serializable]
+public class VisualData
+{
+    public VisualKind Kind = VisualKind.Sprite;
 }
 
 [Serializable]

@@ -18,4 +18,9 @@ public class FilePanel : MonoBehaviour
         reloadButton.onClick.AddListener(() => ReloadClicked?.Invoke());
         saveButton.onClick.AddListener(() => SaveClicked?.Invoke());
     }
+
+    public void Show(bool hasUnsavedChanges)
+    {
+        unsavedLabel.gameObject.SetActive(hasUnsavedChanges);
+    }
 }

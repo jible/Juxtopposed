@@ -33,4 +33,16 @@ public class TimelinePanel : MonoBehaviour
         previousFrameButton.onClick.AddListener(() => PreviousFrameClicked?.Invoke());
         nextFrameButton.onClick.AddListener(() => NextFrameClicked?.Invoke());
     }
+
+    // Showing never raises FrameChanged
+    public void Show(int frame, int length, bool playing)
+    {
+        frameSlider.wholeNumbers = true;
+        frameSlider.minValue = 0;
+        frameSlider.maxValue = Mathf.Max(0, length - 1);
+        frameSlider.SetValueWithoutNotify(frame);
+        frameLabel.text = $"{frame} / {length - 1}";
+        playButton.interactable = !playing;
+        pauseButton.interactable = playing;
+    }
 }
