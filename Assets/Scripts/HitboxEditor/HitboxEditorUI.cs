@@ -21,6 +21,7 @@ public class HitboxEditorUI : MonoBehaviour
     [SerializeField] private BoxPropertiesPanel boxPropertiesPanel;
     [SerializeField] private TimelinePanel timelinePanel;
     [SerializeField] private FramePropertiesPanel framePropertiesPanel;
+    [SerializeField] private StatePropertiesPanel statePropertiesPanel;
 
     private static readonly CharacterId[] Characters = (CharacterId[])Enum.GetValues(typeof(CharacterId));
     private static readonly BoxType[] BoxTypes = (BoxType[])Enum.GetValues(typeof(BoxType));
@@ -30,6 +31,9 @@ public class HitboxEditorUI : MonoBehaviour
     public int SelectedBoxId { get; private set; } = NoBox;
     public int CurrentFrame { get; private set; }
     public bool Playing { get; private set; }
+
+    // Raised after every redraw, which follows every edit, frame change and selection change
+    public event Action Refreshed;
 
     private float playbackTime;
 
@@ -66,6 +70,10 @@ public class HitboxEditorUI : MonoBehaviour
         framePropertiesPanel.PositionYEdited += OnPositionYEdited;
         framePropertiesPanel.ActiveToggled += OnActiveToggled;
         framePropertiesPanel.RemoveKeyClicked += OnRemoveKeyClicked;
+
+        statePropertiesPanel.LengthEdited += OnLengthEdited;
+        statePropertiesPanel.LoopToggled += OnLoopToggled;
+        statePropertiesPanel.AnimationEdited += OnAnimationEdited;
 
         // The manager may have loaded before this was enabled
         ValidateSelection();
@@ -105,6 +113,10 @@ public class HitboxEditorUI : MonoBehaviour
         framePropertiesPanel.PositionYEdited -= OnPositionYEdited;
         framePropertiesPanel.ActiveToggled -= OnActiveToggled;
         framePropertiesPanel.RemoveKeyClicked -= OnRemoveKeyClicked;
+
+        statePropertiesPanel.LengthEdited -= OnLengthEdited;
+        statePropertiesPanel.LoopToggled -= OnLoopToggled;
+        statePropertiesPanel.AnimationEdited -= OnAnimationEdited;
     }
 
     // Playback always loops, whether or not the state does
@@ -211,6 +223,32 @@ public class HitboxEditorUI : MonoBehaviour
         int boxId = SelectedBoxId;
         SelectedBoxId = NoBox;
         manager.RemoveBox(SelectedState, boxId);
+    }
+
+    // ---------- State properties ----------
+
+    // Editing a state with no data creates it. Bad text puts the old value back
+    private void OnLengthEdited(string text)
+    {
+        if (!int.TryParse(text, NumberStyles.Integer, CultureInfo.InvariantCulture, out int length))
+        {
+            Refresh();
+            return;
+        }
+        manager.AddState(SelectedState);
+        manager.SetStateLength(SelectedState, length);
+    }
+
+    private void OnLoopToggled(bool on)
+    {
+        manager.AddState(SelectedState);
+        manager.SetStateLoop(SelectedState, on);
+    }
+
+    private void OnAnimationEdited(string text)
+    {
+        manager.AddState(SelectedState);
+        manager.SetStateAnimation(SelectedState, text);
     }
 
     // ---------- Box properties ----------
@@ -421,7 +459,22 @@ public class HitboxEditorUI : MonoBehaviour
             hitGroup != null ? hitGroup.Damage.ToString(CultureInfo.InvariantCulture) : "",
             hitGroup != null);
 
-        timelinePanel.Show(CurrentFrame, StateLength, Playing);
+        StateFile state = hasState ? manager.GetState(SelectedState) : null;
+        statePropertiesPanel.Show(
+            state != null ? state.Length.ToString(CultureInfo.InvariantCulture) : "",
+            state != null && state.Loop,
+            state != null ? state.Animation : "");
+
+        bool[] keyFrames = null;
+        if (hasBox)
+        {
+            keyFrames = new bool[StateLength];
+            foreach (var key in box.Keys)
+            {
+                if (key.Frame >= 0 && key.Frame < keyFrames.Length) keyFrames[key.Frame] = true;
+            }
+        }
+        timelinePanel.Show(CurrentFrame, StateLength, Playing, keyFrames);
 
         framePropertiesPanel.Show(
             hasBox,
@@ -431,6 +484,8 @@ public class HitboxEditorUI : MonoBehaviour
             active,
             hasKey,
             hasKey && box.Keys.Count > 1);
+
+        Refreshed?.Invoke();
     }
 
     // ---------- Helpers ----------

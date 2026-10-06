@@ -99,7 +99,7 @@ public class Character : MonoBehaviour, ITickable
         {
             case VisualKind.Sprite:
                 var view = gameObject.AddComponent<SpriteCharacterView>();
-                view.Configure(CharacterFiles.ResourceFolder(characterId));
+                view.Configure(CharacterFiles.ResourceFolder(characterId), Data.Visuals.DefaultAnimation);
                 return view;
             default:
                 Debug.LogError($"{characterId} uses {Data.Visuals.Kind} visuals, which aren't supported yet");

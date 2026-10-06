@@ -1,6 +1,4 @@
 using System.Collections.Generic;
-using System.Linq;
-using Unity.VisualScripting.FullSerializer;
 using UnityEngine;
 
 // One box on one frame, as the preview draws it. Display only, so plain Unity types.
@@ -14,84 +12,113 @@ public struct HitboxPreviewData
     public bool Active;
 }
 
+// Draws the selected state's boxes on the current frame, one prefab instance per box id.
+// This object's transform is the character root, so previews are placed relative to it
 public class HitboxPreviewManager : MonoBehaviour
 {
-    // Start is called once before the first execution of Update after the MonoBehaviour is created
-    private Dictionary<int, GameObject> hitboxPreviews = new();
+    // Unselected boxes are drawn fainter, so the one being edited stands out
+    private const float UnselectedAlpha = 0.35f;
+    private const float SelectedAlpha = 0.7f;
+    // The selected box is still drawn on frames it's inactive, so a new box can be placed before it's turned on
+    private const float InactiveAlpha = 0.12f;
+
+    private Dictionary<int, SpriteRenderer> hitboxPreviews = new();
     public GameObject HitboxPreviewPrefab;
     public HitboxEditorManager hitboxEditorManager;
     public HitboxEditorUI hitboxEditorUI;
-    public void Start()
+
+    public Color HurtboxColor = new Color(1f, 0.85f, 0.1f);
+    public Color HitboxColor = new Color(1f, 0.15f, 0.15f);
+    public Color PushboxColor = new Color(0.2f, 0.5f, 1f);
+
+    // The UI refreshes after every edit, frame change and selection change, so that covers everything the preview shows
+    public void OnEnable()
     {
-        hitboxEditorManager.Changed += onHitboxEditorChanged;
+        hitboxEditorUI.Refreshed += onHitboxEditorChanged;
+    }
+
+    public void OnDisable()
+    {
+        hitboxEditorUI.Refreshed -= onHitboxEditorChanged;
     }
 
     public void onHitboxEditorChanged()
     {
+        hitboxEditorManager.GetHitboxData(hitboxEditorUI.SelectedState, hitboxEditorUI.CurrentFrame, out int[] hitBoxKeys, out HitboxPreviewData[] hitboxData);
 
-        hitboxEditorManager.GetHitboxData( hitboxEditorUI.SelectedState, hitboxEditorUI.CurrentFrame, out int[] hitBoxKeys, out HitboxPreviewData[] hitboxData);
-
-        foreach (var key in hitBoxKeys){
-            if (hitboxPreviews.ContainsKey(key))
+        var shown = new HashSet<int>(hitBoxKeys);
+        for (int i = 0; i < hitBoxKeys.Length; i++)
+        {
+            int key = hitBoxKeys[i];
+            if (!hitboxPreviews.TryGetValue(key, out SpriteRenderer preview) || preview == null)
             {
-                // update the value if its already rendered
-
-            } else
-            {
-                
+                preview = AddPreview(key);
             }
+            UpdatePreview(preview, hitboxData[i], key == hitboxEditorUI.SelectedBoxId);
         }
 
-        foreach (var key in hitboxPreviews.Keys)
+        // Copied, since removing while iterating the keys throws
+        foreach (var key in new List<int>(hitboxPreviews.Keys))
         {
-            if (!hitBoxKeys.Contains(key))
+            if (!shown.Contains(key))
             {
                 RemovePreview(key);
             }
         }
-
     }
 
-    public void AddPreview(int name)
+    public SpriteRenderer AddPreview(int name)
     {
-        if (hitboxPreviews.ContainsKey(name))
-        {
-            Debug.LogWarning($"Hitbox preview with name {name} already exists. Overwriting.");
-            return;
-        }
-        var preview = Instantiate(HitboxPreviewPrefab);
+        RemovePreview(name);
+        var preview = Instantiate(HitboxPreviewPrefab, transform).GetComponent<SpriteRenderer>();
+        preview.name = $"Hitbox Preview {name}";
         hitboxPreviews[name] = preview;
+        return preview;
     }
 
-    public void RemovePreview (int name)
+    private void UpdatePreview(SpriteRenderer preview, HitboxPreviewData data, bool selected)
     {
-        if (!hitboxPreviews.ContainsKey(name))
+        bool shown = data.Active || selected;
+        preview.gameObject.SetActive(shown);
+        if (!shown) return;
+
+        preview.transform.localPosition = data.Center;
+        // Scaled so the sprite covers exactly the box, whatever size the sprite is
+        Vector2 spriteSize = preview.sprite.bounds.size;
+        preview.transform.localScale = new Vector3(data.Size.x / spriteSize.x, data.Size.y / spriteSize.y, 1);
+
+        Color color = data.Type switch
+        {
+            BoxType.Hitbox => HitboxColor,
+            BoxType.Pushbox => PushboxColor,
+            _ => HurtboxColor,
+        };
+        color.a = !data.Active ? InactiveAlpha : selected ? SelectedAlpha : UnselectedAlpha;
+        preview.color = color;
+    }
+
+    public void RemovePreview(int name)
+    {
+        if (!hitboxPreviews.TryGetValue(name, out SpriteRenderer preview))
         {
             return;
         }
-        var a  = hitboxPreviews[name];
         hitboxPreviews.Remove(name);
-        if (a == null)
+        if (preview != null)
         {
-            return;
+            Destroy(preview.gameObject);
         }
-        Destroy(a);
     }
 
     public void RemoveAllPreviews()
     {
-        foreach (var key  in hitboxPreviews.Keys)
+        foreach (var preview in hitboxPreviews.Values)
         {
-            var a = hitboxPreviews[key];
-            if (a == null)
+            if (preview != null)
             {
-                continue;
+                Destroy(preview.gameObject);
             }
-            Destroy(a);
         }
         hitboxPreviews.Clear();
-        
     }
 }
-
-

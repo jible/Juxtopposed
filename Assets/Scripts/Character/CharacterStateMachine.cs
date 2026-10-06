@@ -71,7 +71,7 @@ public class CharacterStateMachine
         data.Value = new CharacterStateData { Id = id, TicksInState = 0 };
         changedThisTick = true;
         CurrentState.EnterState(this);
-        StateChanged.Invoke(id);
+        StateChanged?.Invoke(id);
     }
 
     public void Tick()
@@ -83,6 +83,16 @@ public class CharacterStateMachine
         if (!changedThisTick)
         {
             data.Value.TicksInState++;
+
+            // Timing comes from the state's data, never the art, so it is the same on every machine
+            StateDefinition state = Character.Definition.GetState(CurrentStateId);
+            bool loops = state != null && state.Loop;
+            int length = state != null ? state.Length : Character.Data.DefaultStateLength;
+            // Fires once, on the tick the animation runs out. Looping states never finish
+            if (!loops && data.Value.TicksInState == length)
+            {
+                CurrentState.OnAnimFinished(this);
+            }
         }
     }
 }

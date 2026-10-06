@@ -5,5 +5,6 @@ public static partial class Roster
     {
         Ground = { MaxVelocity = new DM64(3) },
         Jump = { Velocity = new DM64(15) / 2 },
+        Visuals = { DefaultAnimation = "BallGamePlayerSpriteSheetV1" },
     };
 }

@@ -67,7 +67,8 @@ public class HitboxEditorManager : MonoBehaviour
     public StateFile AddState(string stateName)
     {
         if (HasState(stateName)) return GetState(stateName);
-        var state = new StateFile();
+        // Starts as long as the game ran the state before it had data
+        var state = new StateFile { Length = Roster.Get(characterId).DefaultStateLength };
         Loaded.States[stateName] = state;
         MarkChanged();
         return state;
@@ -79,10 +80,22 @@ public class HitboxEditorManager : MonoBehaviour
     }
 
     // Keys and active frames past the new end are kept, so shortening by mistake loses nothing.
-    // The runtime build ignores them
+    // The runtime build ignores them. Active ranges that ran to the old end are stretched to the new one
     public void SetStateLength(string stateName, int length)
     {
-        GetState(stateName).Length = Mathf.Max(1, length);
+        StateFile state = GetState(stateName);
+        int oldEnd = state.Length - 1;
+        state.Length = Mathf.Max(1, length);
+        if (state.Length - 1 > oldEnd)
+        {
+            foreach (var box in state.Boxes)
+            {
+                for (int i = 0; i < box.Active.Count; i++)
+                {
+                    if (box.Active[i].End == oldEnd) box.Active[i] = new FrameRange(box.Active[i].Start, state.Length - 1);
+                }
+            }
+        }
         MarkChanged();
     }
 
@@ -110,7 +123,7 @@ public class HitboxEditorManager : MonoBehaviour
         throw new ArgumentException($"State '{stateName}' has no box {boxId}");
     }
 
-    // Starts with one key at frame 0 and active for the whole state
+    // Starts with one key at frame 0 and inactive, so it does nothing until its frames are picked
     public BoxFile AddBox(string stateName, BoxType type, string bone = "")
     {
         StateFile state = GetState(stateName);
@@ -123,7 +136,6 @@ public class HitboxEditorManager : MonoBehaviour
             Bone = bone ?? "",
         };
         box.Keys.Add(new BoxKey { Frame = 0, Size = new DMVector(1, 1) });
-        box.Active.Add(new FrameRange(0, state.Length - 1));
         state.Boxes.Add(box);
         MarkChanged();
         return box;

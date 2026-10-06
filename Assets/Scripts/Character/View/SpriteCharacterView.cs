@@ -11,12 +11,15 @@ public class SpriteCharacterView : MonoBehaviour, ICharacterView
 
     private SpriteRenderer spriteRenderer;
     private string folder;
+    // Stands in for any animation with no sheet
+    private string defaultAnimation;
     // Loaded on first use. Null entries are animations with no sheet, so they are only looked up once
     private readonly Dictionary<string, Sprite[]> animations = new();
 
-    public void Configure(string folder)
+    public void Configure(string folder, string defaultAnimation = null)
     {
         this.folder = folder;
+        this.defaultAnimation = defaultAnimation;
         spriteRenderer = GetComponentInChildren<SpriteRenderer>();
         if (spriteRenderer == null)
         {
@@ -31,8 +34,8 @@ public class SpriteCharacterView : MonoBehaviour, ICharacterView
         // Art is drawn facing right
         spriteRenderer.flipX = facing == Character.Direction.Left;
 
-        Sprite[] sprites = GetSprites(animation);
-        // No sheet keeps whatever was showing, so a missing animation is visible but not blank
+        Sprite[] sprites = GetSprites(animation) ?? GetSprites(defaultAnimation);
+        // No sheet and no default keeps whatever was showing, so a missing animation is visible but not blank
         if (sprites == null) return;
 
         int index = length > 0

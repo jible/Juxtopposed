@@ -1,0 +1,46 @@
+{
+  "Version": 1,
+  "States": {
+    "Idle": {
+      "Animation": "",
+      "Length": 20,
+      "Loop": false,
+      "HitGroups": [],
+      "Boxes": [
+        {
+          "Id": 0,
+          "Name": "Hurtbox 0",
+          "Type": "Hitbox",
+          "Bone": "",
+          "HitGroup": -1,
+          "Keys": [
+            {
+              "Frame": 3,
+              "Offset": {
+                "x": 20,
+                "y": 0
+              },
+              "Size": {
+                "x": 20,
+                "y": 20
+              },
+              "Interpolation": "Hold"
+            }
+          ],
+          "Active": [
+            [
+              0,
+              2
+            ],
+            [
+              13,
+              19
+            ]
+          ]
+        }
+      ],
+      "NextBoxId": 1,
+      "NextHitGroupId": 0
+    }
+  }
+}

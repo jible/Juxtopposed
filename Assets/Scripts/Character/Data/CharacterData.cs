@@ -11,6 +11,8 @@ public class CharacterData
     public AirMovementData Air = new();
     public JumpData Jump = new();
     public VisualData Visuals = new();
+    // Ticks a state lasts when it has no authored data, so states that end on their animation still end
+    public int DefaultStateLength = 30;
 }
 
 public enum VisualKind
@@ -27,6 +29,8 @@ public enum VisualKind
 public class VisualData
 {
     public VisualKind Kind = VisualKind.Sprite;
+    // Played for any animation the character has no art for yet. Null shows nothing new
+    public string DefaultAnimation;
 }
 
 [Serializable]
