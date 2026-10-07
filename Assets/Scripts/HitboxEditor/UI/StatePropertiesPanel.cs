@@ -10,6 +10,9 @@ public class StatePropertiesPanel : MonoBehaviour
     [SerializeField] private TMP_InputField lengthInput;
     [SerializeField] private Toggle loopToggle;
     [SerializeField] private TMP_InputField animationInput;
+    [Tooltip("Shown when the length doesn't split evenly over the animation's sprites")]
+    [SerializeField] private TextMeshProUGUI warningLabel;
+    [SerializeField] private Color warningColor = new Color(1f, 0.85f, 0.1f);
 
     public event Action<string> LengthEdited;
     public event Action<bool> LoopToggled;
@@ -23,10 +26,14 @@ public class StatePropertiesPanel : MonoBehaviour
     }
 
     // Showing never raises the edit events. Always interactable, since editing a state with no data creates it
-    public void Show(string length, bool loop, string animation)
+    // warning is empty when there is nothing to warn about
+    public void Show(string length, bool loop, string animation, string warning)
     {
         lengthInput.SetTextWithoutNotify(length);
         loopToggle.SetIsOnWithoutNotify(loop);
         animationInput.SetTextWithoutNotify(animation);
+        warningLabel.text = warning;
+        warningLabel.color = warningColor;
+        warningLabel.gameObject.SetActive(!string.IsNullOrEmpty(warning));
     }
 }

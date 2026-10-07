@@ -627,6 +627,7 @@ GameObject:
   - component: {fileID: 1010068964}
   - component: {fileID: 1010068967}
   - component: {fileID: 1010068968}
+  - component: {fileID: 1010068969}
   m_Layer: 0
   m_Name: Main
   m_TagString: Untagged
@@ -729,6 +730,18 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: e7e74cb95cfe48f45bee84eaad7ec0d7, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::PhysicsObjectRegistry
+--- !u!114 &1010068969
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1010068961}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 6d6b81279e395bd41bf9129676a61c2c, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::HitboxManager
 --- !u!1 &1065970593
 GameObject:
   m_ObjectHideFlags: 0

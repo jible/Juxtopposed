@@ -18,6 +18,7 @@ public class PlayManager : MonoBehaviour
     PhysicsServer physicsServer;
     TickManager tickManager;
     InputManager inputManager;
+    HitboxManager hitboxManager;
     [SerializeField]
     StageHolder stageHolder;
     [SerializeField]
@@ -35,8 +36,9 @@ public class PlayManager : MonoBehaviour
         physicsServer = transform.GetComponent<PhysicsServer>();
         tickManager = GetComponent<TickManager>();
         inputManager = FindAnyObjectByType<InputManager>();
+        hitboxManager = GetComponent<HitboxManager>();
         if (characterHolder == null) characterHolder = GetComponentInChildren<CharacterHolder>();
-        if (physicsServer== null || tickManager == null || inputManager == null || characterHolder == null)
+        if (physicsServer== null || tickManager == null || inputManager == null || characterHolder == null || hitboxManager == null)
         // stageHolder== null)
         {
             Debug.LogError("Manager Not found");
@@ -48,6 +50,7 @@ public class PlayManager : MonoBehaviour
             PopulateDebugPlayers();
         }
         characterHolder.SpawnCharacters(inputManager);
+        hitboxManager.Configure(characterHolder.Characters);
         // Characters are tickable, so collect after they exist
         tickManager.CollectTickables();
     }

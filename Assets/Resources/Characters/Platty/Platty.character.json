@@ -2,9 +2,9 @@
   "Version": 1,
   "States": {
     "Idle": {
-      "Animation": "",
-      "Length": 20,
-      "Loop": false,
+      "Animation": "BallGamePlayerSpriteSheetV1.png",
+      "Length": 120,
+      "Loop": true,
       "HitGroups": [],
       "Boxes": [
         {
@@ -37,10 +37,41 @@
               19
             ]
           ]
+        },
+        {
+          "Id": 1,
+          "Name": "Hitbox 1",
+          "Type": "Hitbox",
+          "Bone": "",
+          "HitGroup": -1,
+          "Keys": [
+            {
+              "Frame": 0,
+              "Offset": {
+                "x": 20,
+                "y": 0
+              },
+              "Size": {
+                "x": 1,
+                "y": 1
+              },
+              "Interpolation": "Hold"
+            }
+          ],
+          "Active": [
+            [
+              0,
+              0
+            ],
+            [
+              7,
+              7
+            ]
+          ]
         }
       ],
-      "NextBoxId": 1,
-      "NextHitGroupId": 0
+      "NextBoxId": 2,
+      "NextHitGroupId": 3
     }
   }
 }

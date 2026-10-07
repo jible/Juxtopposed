@@ -20,6 +20,8 @@ public class SpriteCharacterView : MonoBehaviour, ICharacterView
     {
         this.folder = folder;
         this.defaultAnimation = defaultAnimation;
+        // Sheets from a previous folder don't apply any more
+        animations.Clear();
         spriteRenderer = GetComponentInChildren<SpriteRenderer>();
         if (spriteRenderer == null)
         {
@@ -34,7 +36,7 @@ public class SpriteCharacterView : MonoBehaviour, ICharacterView
         // Art is drawn facing right
         spriteRenderer.flipX = facing == Character.Direction.Left;
 
-        Sprite[] sprites = GetSprites(animation) ?? GetSprites(defaultAnimation);
+        Sprite[] sprites = ResolveSprites(animation);
         // No sheet and no default keeps whatever was showing, so a missing animation is visible but not blank
         if (sprites == null) return;
 
@@ -43,6 +45,15 @@ public class SpriteCharacterView : MonoBehaviour, ICharacterView
             : frame / UnauthoredTicksPerSprite % sprites.Length;
         spriteRenderer.sprite = sprites[Mathf.Clamp(index, 0, sprites.Length - 1)];
     }
+
+    // Sprites Show spreads over the state for this animation, or 0 when there is no sheet and no default
+    public int SpriteCount(string animation)
+    {
+        Sprite[] sprites = ResolveSprites(animation);
+        return sprites != null ? sprites.Length : 0;
+    }
+
+    private Sprite[] ResolveSprites(string animation) => GetSprites(animation) ?? GetSprites(defaultAnimation);
 
     private Sprite[] GetSprites(string animation)
     {

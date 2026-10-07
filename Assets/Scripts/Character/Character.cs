@@ -37,6 +37,10 @@ public class Character : MonoBehaviour, ITickable
     }
     public ControllerState Controller => inputManager.Controllers[PlayerIndex].Value;
 
+    // Who this character's current state has already hit, one bit per hit group and target player.
+    // Written by the HitboxManager and cleared when a state is entered
+    public readonly SerializableProperty<ulong> HitMemory = new();
+
     [HideInInspector,DoNotSerialize]
     public CharacterMovement characterMovement;
 
@@ -75,6 +79,14 @@ public class Character : MonoBehaviour, ITickable
         currentState = StateMachine.CurrentStateId;
     }
 
+    // Called by the HitboxManager at the end of a tick, after every hit for the tick has been found.
+    // Runs again when a rollback resimulates the tick, so anything done here must be rolled back state
+    public void ReceiveHit(Character attacker, HitGroupDefinition hitGroup)
+    {
+        // Placeholder until there's damage and a hitstun state to apply it to
+        Debug.Log($"{name} was hit by {attacker.name} for {hitGroup.Damage}");
+    }
+
     // After the tick manager's Update, so it draws the final state of this frame, including any rollback
     public void LateUpdate()
     {
@@ -82,9 +94,9 @@ public class Character : MonoBehaviour, ITickable
 
         CharacterStateId stateId = StateMachine.CurrentStateId;
         StateDefinition state = Definition.GetState(stateId);
-        if (state != null && !string.IsNullOrEmpty(state.Animation))
+        if (state != null)
         {
-            View.Show(state.Animation, state.FrameAt(StateMachine.TicksInState), state.Length, direction);
+            View.Show(state.AnimationName, state.FrameAt(StateMachine.TicksInState), state.Length, direction);
         }
         else
         {

@@ -172,7 +172,7 @@ public class PhysicsServer : MonoBehaviour
     // Only records for a. The reverse direction is recorded when b's own query reaches a, so a mutual pair isn't recorded twice
     public void checkTrigger(PhysicsObject a, PhysicsObject b)
     {
-        if (OverlapChecker.CheckOverlap(a, b))
+        if (Overlaps(a, b))
         {
             triggerEvents.Add(new TriggerEvent { Trigger = a, Target = b });
         }
@@ -181,7 +181,7 @@ public class PhysicsServer : MonoBehaviour
     private void ResolveCollision(PhysicsObject a, PhysicsObject b, Axis axis)
     {
         // a is a dynamic body that masks b's layer, and b is a static collider
-        if (OverlapChecker.CheckOverlap(a, b) && HandleCollision(a, b, axis, out DMVector side))
+        if (Overlaps(a, b) && HandleCollision(a, b, axis, out DMVector side))
         {
             collisionEvents.Add(new CollisionEvent { Body = a, Solid = b, Side = side });
         }
@@ -276,55 +276,9 @@ public class PhysicsServer : MonoBehaviour
     }
 
 
-    private static class OverlapChecker
+    // Physics objects overlap when their shapes do, at their transforms' global positions
+    private static bool Overlaps(PhysicsObject a, PhysicsObject b)
     {
-        public static bool CheckOverlap(PhysicsObject a, PhysicsObject b)
-        {
-
-            // PICK UP FROM HERE
-            if (a.shape is Square aSquare && b.shape is Square bSquare)
-            {
-                return SquareSquareOverlap(aSquare, a.GetComponent<DeterministicTransform>(), bSquare, b.GetComponent<DeterministicTransform>());
-            }
-            else if (a.shape is Circle aCircle && b.shape is Circle bCircle)
-            {
-                return CircleCircleOverlap(aCircle, a.GetComponent<DeterministicTransform>(), bCircle, b.GetComponent<DeterministicTransform>());
-            }
-            else if (a.shape is Square aSquare2 && b.shape is Circle bCircle2)
-            {
-                return SquareCircleOverlap(aSquare2, a.GetComponent<DeterministicTransform>(), bCircle2, b.GetComponent<DeterministicTransform>());
-            }
-            else if (a.shape is Circle aCircle2 && b.shape is Square bSquare2)
-            {
-                return SquareCircleOverlap(bSquare2, b.GetComponent<DeterministicTransform>(), aCircle2, a.GetComponent<DeterministicTransform>());
-            }
-            return false;
-
-        }
-        
-
-        public static bool SquareSquareOverlap(Square a, DeterministicTransform aTransform, Square b, DeterministicTransform bTransform)
-        {
-            a.GetBounds(aTransform.globalPosition, out DMVector aMin, out DMVector aMax);
-            b.GetBounds(bTransform.globalPosition, out DMVector bMin, out DMVector bMax);
-
-            return (
-                (aMin.x < bMax.x) &&
-                (aMax.x > bMin.x) &&
-                (aMin.y < bMax.y) &&
-                (aMax.y > bMin.y)
-            );
-
-        }
-        public static bool CircleCircleOverlap(Circle a, DeterministicTransform aTransform, Circle b, DeterministicTransform bTransform)
-        {
-            return false;
-        }
-
-        public static bool SquareCircleOverlap(Square a, DeterministicTransform aTransform, Circle b, DeterministicTransform bTransform)
-        {
-            return false;
-        }
-
+        return Overlap.Shapes(a.shape, a.deterministicTransform.globalPosition, b.shape, b.deterministicTransform.globalPosition);
     }
 }

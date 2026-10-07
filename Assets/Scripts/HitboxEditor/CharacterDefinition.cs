@@ -48,6 +48,9 @@ public sealed class StateDefinition
         Boxes = boxes;
     }
 
+    // The sheet or clip to play. A state with no animation set plays the one named after it
+    public string AnimationName => string.IsNullOrEmpty(Animation) ? Name : Animation;
+
     // Maps ticks spent in the state to a frame of its data
     public int FrameAt(uint ticksInState)
     {

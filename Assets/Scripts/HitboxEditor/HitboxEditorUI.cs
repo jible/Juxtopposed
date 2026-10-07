@@ -22,6 +22,8 @@ public class HitboxEditorUI : MonoBehaviour
     [SerializeField] private TimelinePanel timelinePanel;
     [SerializeField] private FramePropertiesPanel framePropertiesPanel;
     [SerializeField] private StatePropertiesPanel statePropertiesPanel;
+    [Tooltip("Lets the timeline step one sprite at a time. Leave empty to step every tick, as for model characters")]
+    [SerializeField] private HitboxEditorSpriteSetter spriteSetter;
 
     private static readonly CharacterId[] Characters = (CharacterId[])Enum.GetValues(typeof(CharacterId));
     private static readonly BoxType[] BoxTypes = (BoxType[])Enum.GetValues(typeof(BoxType));
@@ -29,6 +31,7 @@ public class HitboxEditorUI : MonoBehaviour
     // A state with no data yet can still be selected, and is created on the first box added to it
     public string SelectedState { get; private set; } = HitboxEditorManager.AllStateNames[0];
     public int SelectedBoxId { get; private set; } = NoBox;
+    // Always a tick. When stepping by sprite it is the first tick of the current sprite, except mid playback
     public int CurrentFrame { get; private set; }
     public bool Playing { get; private set; }
 
@@ -311,9 +314,10 @@ public class HitboxEditorUI : MonoBehaviour
 
     // ---------- Timeline ----------
 
-    private void OnFrameChanged(int frame)
+    // The slider is in steps, which are sprites or ticks
+    private void OnFrameChanged(int step)
     {
-        CurrentFrame = Mathf.Clamp(frame, 0, StateLength - 1);
+        CurrentFrame = StepStart(Mathf.Clamp(step, 0, StepCount - 1));
         Refresh();
     }
 
@@ -324,23 +328,25 @@ public class HitboxEditorUI : MonoBehaviour
         Refresh();
     }
 
+    // Snaps back to the start of the sprite, so edits never land mid sprite
     private void OnPauseClicked()
     {
         Playing = false;
+        CurrentFrame = StepStart(StepOf(CurrentFrame));
         Refresh();
     }
 
     private void OnPreviousFrameClicked()
     {
         Playing = false;
-        CurrentFrame = (CurrentFrame - 1 + StateLength) % StateLength;
+        CurrentFrame = StepStart((StepOf(CurrentFrame) - 1 + StepCount) % StepCount);
         Refresh();
     }
 
     private void OnNextFrameClicked()
     {
         Playing = false;
-        CurrentFrame = (CurrentFrame + 1) % StateLength;
+        CurrentFrame = StepStart((StepOf(CurrentFrame) + 1) % StepCount);
         Refresh();
     }
 
@@ -368,11 +374,16 @@ public class HitboxEditorUI : MonoBehaviour
         manager.SetPosition(SelectedState, SelectedBoxId, CurrentFrame, new DMVector(offset.x, y));
     }
 
+    // Covers every tick the current sprite is shown for
     private void OnActiveToggled(bool on)
     {
         if (!TryGetBox(out _)) return;
         bool[] active = manager.GetActiveFrames(SelectedState, SelectedBoxId);
-        active[CurrentFrame] = on;
+        int step = StepOf(CurrentFrame);
+        for (int frame = StepStart(step); frame < StepStart(step + 1); frame++)
+        {
+            active[frame] = on;
+        }
         manager.SetActiveFrames(SelectedState, SelectedBoxId, active);
     }
 
@@ -463,22 +474,26 @@ public class HitboxEditorUI : MonoBehaviour
         statePropertiesPanel.Show(
             state != null ? state.Length.ToString(CultureInfo.InvariantCulture) : "",
             state != null && state.Loop,
-            state != null ? state.Animation : "");
+            state != null ? state.Animation : "",
+            LengthWarning());
 
-        bool[] keyFrames = null;
+        // A step shows a key notch when any of its ticks has a key
+        int stepCount = StepCount;
+        bool[] keySteps = null;
         if (hasBox)
         {
-            keyFrames = new bool[StateLength];
+            keySteps = new bool[stepCount];
             foreach (var key in box.Keys)
             {
-                if (key.Frame >= 0 && key.Frame < keyFrames.Length) keyFrames[key.Frame] = true;
+                if (key.Frame >= 0 && key.Frame < StateLength) keySteps[StepOf(key.Frame)] = true;
             }
         }
-        timelinePanel.Show(CurrentFrame, StateLength, Playing, keyFrames);
+        int currentStep = StepOf(CurrentFrame);
+        timelinePanel.Show(currentStep, stepCount, Playing, keySteps);
 
         framePropertiesPanel.Show(
             hasBox,
-            CurrentFrame,
+            currentStep,
             hasBox ? Format(offset.x) : "",
             hasBox ? Format(offset.y) : "",
             active,
@@ -492,6 +507,41 @@ public class HitboxEditorUI : MonoBehaviour
 
     // 1 for a state with no data yet
     private int StateLength => manager.Loaded != null && manager.HasState(SelectedState) ? manager.GetState(SelectedState).Length : 1;
+
+    // ---------- Steps ----------
+    // The timeline moves one step at a time. For a sprite animation a step is one sprite, covering every tick
+    // it's shown for, since boxes never need to change mid sprite. Otherwise a step is one tick
+
+    // 0 when there is no sprite setter, no data for the state, or no sheet
+    private int SpriteCount => spriteSetter != null && manager.Loaded != null && manager.HasState(SelectedState)
+        ? spriteSetter.SpriteCount(SelectedState)
+        : 0;
+
+    // A state shorter than its sheet can't give every sprite a tick, so it steps per tick instead
+    private bool StepsBySprite => SpriteCount > 0 && SpriteCount < StateLength;
+
+    private int StepCount => StepsBySprite ? SpriteCount : StateLength;
+
+    // First tick showing the step's sprite. The inverse of SpriteCharacterView's frame * sprites / length,
+    // so it holds when the length doesn't divide evenly. StepStart(StepCount) is the state's length
+    private int StepStart(int step)
+    {
+        if (!StepsBySprite) return step;
+        int sprites = SpriteCount;
+        return (step * StateLength + sprites - 1) / sprites;
+    }
+
+    private int StepOf(int frame) => StepsBySprite ? frame * SpriteCount / StateLength : frame;
+
+    // Empty when the length splits evenly over the sprites, or there are no sprites
+    private string LengthWarning()
+    {
+        int sprites = SpriteCount;
+        int length = StateLength;
+        if (sprites == 0 || length % sprites == 0) return "";
+        if (length < sprites) return $"{length} ticks is shorter than the {sprites} sprites, so some will never show";
+        return $"{length} ticks don't divide evenly into {sprites} sprites, so some show longer than others";
+    }
 
     private bool TryGetBox(out BoxFile box)
     {
@@ -522,6 +572,7 @@ public class HitboxEditorUI : MonoBehaviour
             }
         }
         CurrentFrame = Mathf.Clamp(CurrentFrame, 0, StateLength - 1);
+        if (!Playing) CurrentFrame = StepStart(StepOf(CurrentFrame));
     }
 
     // "Root", then the bones baked for the state. The box's own bone is kept even when it has no bake

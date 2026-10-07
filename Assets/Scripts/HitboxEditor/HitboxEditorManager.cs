@@ -153,9 +153,12 @@ public class HitboxEditorManager : MonoBehaviour
         MarkChanged();
     }
 
+    // A box still on its default name is renamed to match, so the name never lies about the type
     public void SetBoxType(string stateName, int boxId, BoxType type)
     {
-        GetBox(stateName, boxId).Type = type;
+        BoxFile box = GetBox(stateName, boxId);
+        if (box.Name == $"{box.Type} {box.Id}") box.Name = $"{type} {box.Id}";
+        box.Type = type;
         MarkChanged();
     }
 
