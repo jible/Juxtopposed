@@ -573,7 +573,6 @@ MonoBehaviour:
   isStatic: 1
   renderShape: 1
   renderColor: {r: 0.12428801, g: 0.46226418, b: 0.16360691, a: 1}
-  physicsObjectID: 0
   visitStamp: 0
   objectType: 1
   serializedIsActive:
@@ -623,11 +622,7 @@ GameObject:
   m_Component:
   - component: {fileID: 1010068963}
   - component: {fileID: 1010068966}
-  - component: {fileID: 1010068965}
   - component: {fileID: 1010068964}
-  - component: {fileID: 1010068967}
-  - component: {fileID: 1010068968}
-  - component: {fileID: 1010068969}
   m_Layer: 0
   m_Name: Main
   m_TagString: Untagged
@@ -665,6 +660,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 33b1a7e2b07ca434dacfc6988367134c, type: 3}
   m_Name: 
   m_EditorClassIdentifier: '::'
+  worldRoot: {fileID: 0}
   stageHolder: {fileID: 467007072}
   characterHolder: {fileID: 1065970595}
   useDebugPlayers: 1
@@ -677,21 +673,6 @@ MonoBehaviour:
     Character: 0
   - Used: 0
     Character: 0
---- !u!114 &1010068965
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1010068961}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 0bc67fd13f7c50e4f9b01b07665f9e4c, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::PhysicsServer
-  Epsilon:
-    raw: 429496
-  physicsObjectRegistry: {fileID: 1010068968}
 --- !u!114 &1010068966
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -704,44 +685,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 88ca7ab4c592d9e4ea1aab555960bd30, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::EditorPhysicsShapeRenderer
+  worldRoot: {fileID: 1010068963}
   renderZAxis: 0
---- !u!114 &1010068967
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1010068961}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 1430348299c0f37479dac070896b24a7, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::TickManager
-  Ready: 0
---- !u!114 &1010068968
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1010068961}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: e7e74cb95cfe48f45bee84eaad7ec0d7, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::PhysicsObjectRegistry
---- !u!114 &1010068969
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1010068961}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 6d6b81279e395bd41bf9129676a61c2c, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::HitboxManager
+  renderThickness: 0.5
 --- !u!1 &1065970593
 GameObject:
   m_ObjectHideFlags: 0

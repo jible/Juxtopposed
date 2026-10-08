@@ -1,10 +1,10 @@
 using System;
 using Unity.VisualScripting;
-using UnityEditor.PackageManager;
 using UnityEngine;
 
 
-[RequireComponent(typeof(DeterministicTransform)), ExecuteAlways]
+// Collected by the DeterministicWorld when it is built, so it never registers itself anywhere
+[RequireComponent(typeof(DeterministicTransform))]
 public class PhysicsObject : MonoBehaviour
 {
     [SerializeReference, SubclassSelector]
@@ -24,12 +24,10 @@ public class PhysicsObject : MonoBehaviour
     [Tooltip("The Layer is what layer this object exists on. For collision, the static object should be masked by the static one")]
     public int Layer;
     public bool isStatic = false;
-    [Tooltip("Whether PhysicsShapeRenderer should draw this object's shape.")]
+    [Tooltip("Whether the physics shape renderers should draw this object's shape.")]
     public bool renderShape = true;
-    [Tooltip("Color PhysicsShapeRenderer draws this object's shape with.")]
+    [Tooltip("Color the physics shape renderers draw this object's shape with.")]
     public Color renderColor = new Color(1f, 1f, 1f, 0.5f);
-    [HideInInspector]
-    public int physicsObjectID = -1;
     [DoNotSerialize, HideInInspector]
     public int visitStamp;
     private DeterministicTransform _deterministicTransform =null;
@@ -46,22 +44,6 @@ public class PhysicsObject : MonoBehaviour
         }
     }
     public ObjectType objectType;
-    private PhysicsObjectRegistry _physicsObjectRegistry;
-    private PhysicsObjectRegistry physicsObjectRegistry
-    {
-        get
-        {
-            if (_physicsObjectRegistry == null)
-            {
-                _physicsObjectRegistry = GetComponentInParent<PhysicsObjectRegistry>();
-                if (_physicsObjectRegistry == null)
-                {
-                    Debug.LogError("Physics Object could not find physics object registry");
-                }
-            }
-            return _physicsObjectRegistry;
-        }
-    }
 
     [SerializeField]
     private SerializableProperty<bool> serializedIsActive = new();
@@ -105,21 +87,6 @@ public class PhysicsObject : MonoBehaviour
     public void OnCollide(PhysicsObject other, DMVector side)
     {
         Colliding?.Invoke(this, other, side);
-    }
-
-    public void Awake()
-    {
-        // Prefab mode has no registry to join
-        if (EditorContext.IsInPrefabStage(gameObject)) return;
-        physicsObjectRegistry.Register(this);
-    }
-
-    // The registry is static and empty after a script reload, which doesn't call Awake again.
-    // Register is a no-op if already registered.
-    public void OnEnable()
-    {
-        if (EditorContext.IsInPrefabStage(gameObject)) return;
-        physicsObjectID = physicsObjectRegistry.Register(this);
     }
 
     private void Reset()

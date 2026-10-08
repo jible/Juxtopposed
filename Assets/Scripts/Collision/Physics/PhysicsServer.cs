@@ -1,78 +1,50 @@
-using System;
 using System.Collections.Generic;
-using System.Collections.Specialized;
 using System.Linq;
-using System.Runtime.CompilerServices;
-using System.Runtime.ExceptionServices;
-using System.Threading;
-using Unity.Collections;
-using Unity.VisualScripting;
-using UnityEditor;
-using UnityEngine;
-using UnityEngine.Animations;
-using UnityEngine.InputSystem.Composites;
-using UnityEngine.UI;
-using UnityEngine.UIElements;
 
-[DefaultExecutionOrder(-10000)]
-[ExecuteAlways]
-public class PhysicsServer : MonoBehaviour
+// Owned by the DeterministicWorld, which hands it every physics object once when the world is built.
+// The sets of objects never change after that, so they're sorted into arrays up front
+public class PhysicsServer
 {
     public DM64 Epsilon = new(.0001f);
-    private List<PhysicsObject>[] BucketByLayer = new List<PhysicsObject>[32];
-    private List<PhysicsObject>[] StaticBucketByLayer = new List<PhysicsObject>[32];
 
-    [SerializeField]
+    private const int LayerCount = 32;
+    // Every object, in the world's collection order
+    private readonly PhysicsObject[] all;
+    // Trigger boxes, iterated by the trigger pass
+    private readonly PhysicsObject[] triggers;
+    // Collision objects that get moved and pushed out of static ones
+    private readonly PhysicsObject[] dynamicBodies;
+    // Triggers can overlap anything, but only static colliders are ever collided against
+    private readonly PhysicsObject[][] bucketByLayer;
+    private readonly PhysicsObject[][] staticBucketByLayer;
 
-    private PhysicsObjectRegistry physicsObjectRegistry;
     private enum Axis
     {
         X,Y
     }
     private static readonly Axis[] axes = {Axis.X, Axis.Y};
-    // Awake is not called again after a script reload (domain reload), but statics are wiped.
 
-    public void Awake()
+    // objectType, isStatic and Layer are read here, so they must be set before the world is built
+    public PhysicsServer(IReadOnlyList<PhysicsObject> objects)
     {
-        // Runs before any PhysicsObject/DeterministicTransform Awake (DefaultExecutionOrder),
-        // so this clear always happens before those objects register themselves.
-        physicsObjectRegistry = GetComponent<PhysicsObjectRegistry>();
-        SerializableDataManager.Reset();
+        all = objects.ToArray();
+        triggers = all.Where(obj => obj.objectType == PhysicsObject.ObjectType.TriggerBox).ToArray();
+        dynamicBodies = all.Where(obj => obj.objectType == PhysicsObject.ObjectType.CollisionObject && !obj.isStatic).ToArray();
+        PhysicsObject[] staticColliders = all.Where(obj => obj.objectType == PhysicsObject.ObjectType.CollisionObject && obj.isStatic).ToArray();
 
-        for (int i = 0;  i < BucketByLayer.Length; i++)
-        {
-            BucketByLayer[i] = new();
-            StaticBucketByLayer[i] = new();
-        }
+        bucketByLayer = BucketByLayer(all);
+        staticBucketByLayer = BucketByLayer(staticColliders);
     }
 
-    public void RegisterPhysicsObjectsByLayer()
+    private static PhysicsObject[][] BucketByLayer(PhysicsObject[] objects)
     {
-        // We already have every physics object, but we wait to call this until each of them have their properties configured 
-        // such that they will not need to change during runtime- ie the player registers their hitboxes,
-        //  but needs to set their layer 
-        for (int i = 0; i < BucketByLayer.Length; i++)
+        var buckets = new PhysicsObject[LayerCount][];
+        for (int i = 0; i < LayerCount; i++)
         {
-            BucketByLayer[i].Clear();
-            StaticBucketByLayer[i].Clear();
+            int layerBit = 1 << i;
+            buckets[i] = objects.Where(obj => (obj.Layer & layerBit) != 0).ToArray();
         }
-        // Triggers can overlap anything, but only static colliders are ever collided against
-        AddToLayerBuckets(BucketByLayer, physicsObjectRegistry.All);
-        AddToLayerBuckets(StaticBucketByLayer, physicsObjectRegistry.StaticColliders);
-    }
-
-    private static void AddToLayerBuckets(List<PhysicsObject>[] buckets, List<PhysicsObject> objects)
-    {
-        foreach (PhysicsObject obj in objects)
-        {
-            for (int i = 0; i < buckets.Length; i++)
-            {
-                if ((obj.Layer & (1 << i)) != 0)
-                {
-                    buckets[i].Add(obj);
-                }
-            }
-        }
+        return buckets;
     }
 
     // Should be pretty much the last thing that happens every frame
@@ -120,7 +92,7 @@ public class PhysicsServer : MonoBehaviour
     // Velocity is in units per second, this is the only place it's converted to units per tick
     private void ApplyVelocity(Axis axis)
     {   
-        foreach (var physicsObject in physicsObjectRegistry.All)
+        foreach (var physicsObject in all)
             {
                 var x = axis == Axis.X?physicsObject.velocity.Value.x: new DM64(0);
                 var y = axis == Axis.Y?physicsObject.velocity.Value.y: new DM64(0);
@@ -131,15 +103,15 @@ public class PhysicsServer : MonoBehaviour
     private void ResolveAllCollisions(Axis axis)
     {
         // Only active dynamic bodies query, and only against static colliders
-        foreach (var A in physicsObjectRegistry.DynamicBodies)
+        foreach (var A in dynamicBodies)
         {
             if (!A.isActive) continue;
             int stamp = ++Stamp;
-            for (int layerIndex = 0; layerIndex < StaticBucketByLayer.Length; layerIndex++)
+            for (int layerIndex = 0; layerIndex < staticBucketByLayer.Length; layerIndex++)
             {
                 // Skip layers this object doesn't mask
                 if ((A.Mask & (1 << layerIndex)) == 0) continue;
-                foreach (var B in StaticBucketByLayer[layerIndex])
+                foreach (var B in staticBucketByLayer[layerIndex])
                 {
                     if (!B.isActive || B.visitStamp == stamp) continue;
                     B.visitStamp = stamp;
@@ -152,14 +124,14 @@ public class PhysicsServer : MonoBehaviour
     private void DetectTriggers()
     {
         // Only active triggers query, against anything on the layers they mask
-        foreach (var A in physicsObjectRegistry.Triggers)
+        foreach (var A in triggers)
         {
             if (!A.isActive) continue;
             int stamp = ++Stamp;
-            for (int layerIndex = 0; layerIndex < BucketByLayer.Length; layerIndex++)
+            for (int layerIndex = 0; layerIndex < bucketByLayer.Length; layerIndex++)
             {
                 if ((A.Mask & (1 << layerIndex)) == 0) continue;
-                foreach (var B in BucketByLayer[layerIndex])
+                foreach (var B in bucketByLayer[layerIndex])
                 {
                     if (A == B || !B.isActive || B.visitStamp == stamp) continue;
                     B.visitStamp = stamp;

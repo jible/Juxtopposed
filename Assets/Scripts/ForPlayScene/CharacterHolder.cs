@@ -20,7 +20,7 @@ public class CharacterHolder : MonoBehaviour
             PlayerProfile profile = PlayerManager.players[playerNumber];
             if (profile == null) continue;
 
-            // Parented here so its deterministic transform finds the manager above it
+            // Parented under the world root so the world collects it, and in player number order so it ticks in that order
             Character character = Instantiate(characterPrefab, transform);
             character.name = $"Player {playerNumber + 1} ({profile.Character})";
             DMVector spawnPosition = playerNumber < spawnPositions.Length ? spawnPositions[playerNumber] : DMVector.zero;

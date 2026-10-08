@@ -31,7 +31,7 @@ public class BoxPropertiesPanel : MonoBehaviour
         damageInput.onEndEdit.AddListener(text => DamageEdited?.Invoke(text));
     }
 
-    // Showing never raises the edit events. Damage belongs to the box's hit group, so it is disabled without one
+    // Showing never raises the edit events. Only hitboxes deal damage, so it is disabled on other boxes
     public void Show(bool hasBox, string name, List<string> types, int type, List<string> parents, int parent,
         string width, string height, string damage, bool hasDamage)
     {

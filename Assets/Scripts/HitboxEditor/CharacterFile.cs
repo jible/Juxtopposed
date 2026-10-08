@@ -30,17 +30,13 @@ public class StateFile
     public int NextHitGroupId;
 }
 
-// Boxes in one group share a single hit, so a multi box attack only connects once per target
+// Boxes in one group share a single hit, so a multi box attack only connects once per target.
+// What the hit deals belongs to each box, and the best overlapping box in the group lands
 [Serializable]
 public class HitGroupFile
 {
     public int Id;
     public string Name = "";
-    public int Damage;
-    // Ticks the target is stunned for
-    public int Hitstun;
-    // Facing right, mirrored with the attacker
-    public DMVector Knockback;
 }
 
 // Saved by name, so renaming a value breaks existing files
@@ -66,6 +62,12 @@ public class BoxFile
     public string Bone = "";
     // Hit group id, or NoHitGroup. Only hitboxes use it
     public int HitGroup = NoHitGroup;
+    // What the box deals. Only hitboxes use these
+    public int Damage;
+    // Ticks the target is stunned for
+    public int Hitstun;
+    // Facing right, mirrored with the attacker
+    public DMVector Knockback;
     public List<BoxKey> Keys = new();
     // Frames the box exists on. A box with no ranges is never active
     public List<FrameRange> Active = new();

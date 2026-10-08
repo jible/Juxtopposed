@@ -13,6 +13,12 @@
           "Type": "Hitbox",
           "Bone": "",
           "HitGroup": -1,
+          "Damage": 0,
+          "Hitstun": 0,
+          "Knockback": {
+            "x": 0,
+            "y": 0
+          },
           "Keys": [
             {
               "Frame": 3,
@@ -44,6 +50,12 @@
           "Type": "Hitbox",
           "Bone": "",
           "HitGroup": -1,
+          "Damage": 0,
+          "Hitstun": 0,
+          "Knockback": {
+            "x": 0,
+            "y": 0
+          },
           "Keys": [
             {
               "Frame": 0,

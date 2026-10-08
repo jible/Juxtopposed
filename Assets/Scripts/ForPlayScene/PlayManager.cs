@@ -1,12 +1,10 @@
 using System;
-using Unity.VisualScripting;
 using UnityEngine;
 
 public class PlayManager : MonoBehaviour
 {
-    // This script is in charge of syncing all of the other scripts,
-    // ensuring they are configured in the correct order and waits to call updates
-    // until they are all configured
+    // This script is in charge of setting up the play scene: it spawns everything the world needs,
+    // then builds the deterministic world from it and drives it every frame
 
     [Serializable]
     private struct DebugPlayerSlot
@@ -15,10 +13,12 @@ public class PlayManager : MonoBehaviour
         public CharacterId Character;
     }
 
-    PhysicsServer physicsServer;
-    TickManager tickManager;
     InputManager inputManager;
-    HitboxManager hitboxManager;
+    // Null until Start, so nothing ticks before every object exists
+    DeterministicWorld world;
+    [Tooltip("Everything under this is collected into the deterministic world. Defaults to this object")]
+    [SerializeField]
+    Transform worldRoot;
     [SerializeField]
     StageHolder stageHolder;
     [SerializeField]
@@ -33,15 +33,15 @@ public class PlayManager : MonoBehaviour
     public void Awake()
     {
         // Establish references
-        physicsServer = transform.GetComponent<PhysicsServer>();
-        tickManager = GetComponent<TickManager>();
         inputManager = FindAnyObjectByType<InputManager>();
-        hitboxManager = GetComponent<HitboxManager>();
+        if (worldRoot == null) worldRoot = transform;
         if (characterHolder == null) characterHolder = GetComponentInChildren<CharacterHolder>();
-        if (physicsServer== null || tickManager == null || inputManager == null || characterHolder == null || hitboxManager == null)
+        if (inputManager == null || characterHolder == null)
         // stageHolder== null)
         {
             Debug.LogError("Manager Not found");
+            // Skips Start and Update, so no world is built from a half set up scene
+            enabled = false;
             return;
         }
 
@@ -49,10 +49,10 @@ public class PlayManager : MonoBehaviour
         {
             PopulateDebugPlayers();
         }
+        // Clears rollback data left over from before this scene, so only properties made from here on are saved.
+        // SerializableProperty registers when it's constructed, and the characters below are constructed after this
+        SerializableDataManager.Reset();
         characterHolder.SpawnCharacters(inputManager);
-        hitboxManager.Configure(characterHolder.Characters);
-        // Characters are tickable, so collect after they exist
-        tickManager.CollectTickables();
     }
 
     private void PopulateDebugPlayers()
@@ -69,9 +69,13 @@ public class PlayManager : MonoBehaviour
 
     public void Start()
     {
-        // Every physics object has registered by now, so bucket them by layer
-        physicsServer.RegisterPhysicsObjectsByLayer();
-        tickManager.Ready = true;
+        // Every object has run Awake and been configured by now, so the world can collect them
+        world = new DeterministicWorld(worldRoot, inputManager);
+    }
+
+    public void Update()
+    {
+        world?.Update(Time.deltaTime);
     }
 
 }

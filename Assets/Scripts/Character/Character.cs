@@ -3,8 +3,9 @@ using UnityEngine;
 
 // Owns a character's state machine and holds every reference its states need
 [RequireComponent(typeof(DeterministicTransform), typeof(PhysicsObject))]
-public class Character : MonoBehaviour, ITickable
+public class Character : MonoBehaviour, ITickable, IEntity
 {
+    public byte EntityId { get; set; }
     [HideInInspector,DoNotSerialize]
     public InputManager inputManager;
     public InputManager.InputGetter inputGetter;
@@ -37,9 +38,9 @@ public class Character : MonoBehaviour, ITickable
     }
     public ControllerState Controller => inputManager.Controllers[PlayerIndex].Value;
 
-    // Who this character's current state has already hit, one bit per hit group and target player.
-    // Written by the HitboxManager and cleared when a state is entered
-    public readonly SerializableProperty<ulong> HitMemory = new();
+    // Who this character's current state has already hit, one per hit group index of the current state.
+    // Sized by the definition when configured. Written by the HitboxManager and cleared when a state is entered
+    public HitGroup[] HitGroups { get; private set; }
 
     [HideInInspector,DoNotSerialize]
     public CharacterMovement characterMovement;
@@ -61,6 +62,8 @@ public class Character : MonoBehaviour, ITickable
     {
         Data = Roster.Get(characterId);
         Definition = CharacterFiles.LoadDefinition(characterId);
+        // Rollback state, so made here, before the world is built, and never resized
+        HitGroups = HitGroup.CreateSet(Definition.MaxHitGroups);
         View = CreateView(characterId);
         PlayerIndex = playerIndex;
         this.inputManager = inputManager;
@@ -81,10 +84,10 @@ public class Character : MonoBehaviour, ITickable
 
     // Called by the HitboxManager at the end of a tick, after every hit for the tick has been found.
     // Runs again when a rollback resimulates the tick, so anything done here must be rolled back state
-    public void ReceiveHit(Character attacker, HitGroupDefinition hitGroup)
+    public void ReceiveHit(Character attacker, HitDefinition hit)
     {
         // Placeholder until there's damage and a hitstun state to apply it to
-        Debug.Log($"{name} was hit by {attacker.name} for {hitGroup.Damage}");
+        Debug.Log($"{name} was hit by {attacker.name} for {hit.Damage}");
     }
 
     // After the tick manager's Update, so it draws the final state of this frame, including any rollback

@@ -299,17 +299,16 @@ public class HitboxEditorUI : MonoBehaviour
         manager.SetSize(SelectedState, SelectedBoxId, CurrentFrame, new DMVector(size.x, height));
     }
 
-    // Damage belongs to the box's hit group
+    // Damage belongs to each hitbox, so boxes sharing a hit group can deal different hits
     private void OnDamageEdited(string text)
     {
-        if (!TryGetBox(out BoxFile box) || box.HitGroup == BoxFile.NoHitGroup
+        if (!TryGetBox(out BoxFile box) || box.Type != BoxType.Hitbox
             || !int.TryParse(text, NumberStyles.Integer, CultureInfo.InvariantCulture, out int damage))
         {
             Refresh();
             return;
         }
-        HitGroupFile group = manager.GetHitGroup(SelectedState, box.HitGroup);
-        manager.SetHitGroupValues(SelectedState, group.Id, group.Name, damage, group.Hitstun, group.Knockback);
+        manager.SetBoxHit(SelectedState, SelectedBoxId, damage, box.Hitstun, box.Knockback);
     }
 
     // ---------- Timeline ----------
@@ -427,18 +426,13 @@ public class HitboxEditorUI : MonoBehaviour
 
         var hitGroupNames = new List<string> { "None" };
         int hitGroupIndex = 0;
-        HitGroupFile hitGroup = null;
         if (hasState)
         {
             List<HitGroupFile> groups = manager.GetState(SelectedState).HitGroups;
             for (int i = 0; i < groups.Count; i++)
             {
                 hitGroupNames.Add(groups[i].Name);
-                if (hasBox && groups[i].Id == box.HitGroup)
-                {
-                    hitGroupIndex = i + 1;
-                    hitGroup = groups[i];
-                }
+                if (hasBox && groups[i].Id == box.HitGroup) hitGroupIndex = i + 1;
             }
         }
         pickerPanel.ShowHitGroups(hitGroupNames, hitGroupIndex, hasBox && box.Type == BoxType.Hitbox);
@@ -458,6 +452,7 @@ public class HitboxEditorUI : MonoBehaviour
         }
 
         List<string> parents = hasBox ? GetParentOptions(box) : new List<string> { "Root" };
+        bool isHitbox = hasBox && box.Type == BoxType.Hitbox;
         boxPropertiesPanel.Show(
             hasBox,
             hasBox ? box.Name : "",
@@ -467,8 +462,8 @@ public class HitboxEditorUI : MonoBehaviour
             hasBox && box.Bone != "" ? parents.IndexOf(box.Bone) : 0,
             hasBox ? Format(size.x) : "",
             hasBox ? Format(size.y) : "",
-            hitGroup != null ? hitGroup.Damage.ToString(CultureInfo.InvariantCulture) : "",
-            hitGroup != null);
+            isHitbox ? box.Damage.ToString(CultureInfo.InvariantCulture) : "",
+            isHitbox);
 
         StateFile state = hasState ? manager.GetState(SelectedState) : null;
         statePropertiesPanel.Show(

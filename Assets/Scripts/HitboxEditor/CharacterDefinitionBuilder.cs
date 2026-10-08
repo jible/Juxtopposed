@@ -22,14 +22,14 @@ public static class CharacterDefinitionBuilder
         BakedAnimation animation = null;
         skeleton?.Animations.TryGetValue(state.Animation ?? "", out animation);
 
-        var hitGroups = new HitGroupDefinition[state.HitGroups.Count];
+        // Groups only exist to share hit memory, so all that's kept is each one's index
         var hitGroupIndexById = new Dictionary<int, int>();
-        for (int i = 0; i < hitGroups.Length; i++)
+        for (int i = 0; i < state.HitGroups.Count; i++)
         {
-            HitGroupFile group = state.HitGroups[i];
-            hitGroups[i] = new HitGroupDefinition(group.Id, group.Damage, group.Hitstun, group.Knockback);
-            hitGroupIndexById[group.Id] = i;
+            hitGroupIndexById[state.HitGroups[i].Id] = i;
         }
+        // A hitbox without a group is a group of its own, numbered after the authored ones
+        int nextOwnGroupIndex = state.HitGroups.Count;
 
         var boxes = new BoxDefinition[state.Boxes.Count];
         for (int i = 0; i < boxes.Length; i++)
@@ -38,8 +38,12 @@ public static class CharacterDefinitionBuilder
             int hitGroupIndex = -1;
             if (box.HitGroup != BoxFile.NoHitGroup && !hitGroupIndexById.TryGetValue(box.HitGroup, out hitGroupIndex))
             {
-                Debug.LogWarning($"{name} box {box.Id} uses missing hit group {box.HitGroup}");
+                Debug.LogWarning($"{name} box {box.Id} uses missing hit group {box.HitGroup}, so it hits on its own");
                 hitGroupIndex = -1;
+            }
+            if (box.Type == BoxType.Hitbox && hitGroupIndex < 0)
+            {
+                hitGroupIndex = nextOwnGroupIndex++;
             }
 
             ExpandKeys(box, length, out DMVector[] offsets, out DMVector[] sizes, $"{name} box {box.Id}");
@@ -47,13 +51,14 @@ public static class CharacterDefinitionBuilder
                 box.Id,
                 box.Type,
                 hitGroupIndex,
+                box.Type == BoxType.Hitbox ? new HitDefinition(box.Damage, box.Hitstun, box.Knockback) : null,
                 offsets,
                 sizes,
                 ExpandActive(box.Active, length),
                 FindBoneTrack(animation, box.Bone, $"{name} box {box.Id}"));
         }
 
-        return new StateDefinition(name, state.Animation, length, state.Loop, hitGroups, boxes);
+        return new StateDefinition(name, state.Animation, length, state.Loop, boxes);
     }
 
     private static void ExpandKeys(BoxFile box, int length, out DMVector[] offsets, out DMVector[] sizes, string context)

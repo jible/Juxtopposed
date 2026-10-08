@@ -78,15 +78,6 @@ public class DeterministicTransform : MonoBehaviour
     public void Awake()
     {
         serializedPosition.OnLoaded = SetDirty;
-        // Awake, not OnEnable, so the component's enabled checkbox has no effect on syncing.
-        // Edit mode is synced by the position setter and OnValidate instead
-        if (Application.isPlaying) DeterministicTransformRegistry.Add(this);
-    }
-
-    public void OnDestroy()
-    {
-        // Also runs on scene unload, so the registry never holds dead transforms
-        DeterministicTransformRegistry.Remove(this);
     }
 
     public void OnValidate()

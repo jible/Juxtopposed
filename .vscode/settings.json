@@ -71,6 +71,8 @@
     "cSpell.words": [
         "Behaviour",
         "hitbox",
+        "hurtbox",
+        "hurtboxes",
         "Tickable",
         "Tickables"
     ]

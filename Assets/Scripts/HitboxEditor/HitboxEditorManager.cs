@@ -360,13 +360,13 @@ public class HitboxEditorManager : MonoBehaviour
         MarkChanged();
     }
 
-    public void SetHitGroupValues(string stateName, int hitGroupId, string name, int damage, int hitstun, DMVector knockback)
+    // What a hitbox deals
+    public void SetBoxHit(string stateName, int boxId, int damage, int hitstun, DMVector knockback)
     {
-        HitGroupFile group = GetHitGroup(stateName, hitGroupId);
-        group.Name = name ?? "";
-        group.Damage = damage;
-        group.Hitstun = hitstun;
-        group.Knockback = knockback;
+        BoxFile box = GetBox(stateName, boxId);
+        box.Damage = damage;
+        box.Hitstun = hitstun;
+        box.Knockback = knockback;
         MarkChanged();
     }
 

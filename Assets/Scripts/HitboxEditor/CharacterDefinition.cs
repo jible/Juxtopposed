@@ -7,6 +7,9 @@ using System.Collections.Generic;
 public sealed class CharacterDefinition
 {
     public readonly StateDefinition[] States;
+    // Most hit groups any one state uses, counting hitboxes that hit on their own.
+    // Each character holds this many HitGroups, reused by whichever state it's in
+    public readonly int MaxHitGroups;
     private readonly Dictionary<string, StateDefinition> statesByName = new();
 
     public CharacterDefinition(StateDefinition[] states)
@@ -15,6 +18,10 @@ public sealed class CharacterDefinition
         foreach (var state in states)
         {
             statesByName[state.Name] = state;
+            foreach (var box in state.Boxes)
+            {
+                if (box.HitGroupIndex + 1 > MaxHitGroups) MaxHitGroups = box.HitGroupIndex + 1;
+            }
         }
     }
 
@@ -35,16 +42,14 @@ public sealed class StateDefinition
     public readonly string Animation;
     public readonly int Length;
     public readonly bool Loop;
-    public readonly HitGroupDefinition[] HitGroups;
     public readonly BoxDefinition[] Boxes;
 
-    public StateDefinition(string name, string animation, int length, bool loop, HitGroupDefinition[] hitGroups, BoxDefinition[] boxes)
+    public StateDefinition(string name, string animation, int length, bool loop, BoxDefinition[] boxes)
     {
         Name = name;
         Animation = animation;
         Length = length;
         Loop = loop;
-        HitGroups = hitGroups;
         Boxes = boxes;
     }
 
@@ -59,16 +64,15 @@ public sealed class StateDefinition
     }
 }
 
-public sealed class HitGroupDefinition
+// What a hitbox deals. Each hitbox has its own, so a sweet spot and a sour spot in one hit group can differ
+public sealed class HitDefinition
 {
-    public readonly int Id;
     public readonly int Damage;
     public readonly int Hitstun;
     public readonly DMVector Knockback;
 
-    public HitGroupDefinition(int id, int damage, int hitstun, DMVector knockback)
+    public HitDefinition(int damage, int hitstun, DMVector knockback)
     {
-        Id = id;
         Damage = damage;
         Hitstun = hitstun;
         Knockback = knockback;
@@ -81,8 +85,11 @@ public sealed class BoxDefinition
 {
     public readonly int Id;
     public readonly BoxType Type;
-    // Index into the state's HitGroups, or -1
+    // Index of the box's hit group within its state. Boxes in a group share one hit per target.
+    // Every hitbox has one, since a hitbox without an authored group gets its own. -1 on other boxes
     public readonly int HitGroupIndex;
+    // Hitboxes only, null otherwise
+    public readonly HitDefinition Hit;
 
     // All indexed by frame and as long as the state
     private readonly DMVector[] offsets;
@@ -91,11 +98,12 @@ public sealed class BoxDefinition
     // Bone position per frame, null when the box follows the root
     private readonly DMVector[] bonePositions;
 
-    public BoxDefinition(int id, BoxType type, int hitGroupIndex, DMVector[] offsets, DMVector[] sizes, bool[] active, DMVector[] bonePositions)
+    public BoxDefinition(int id, BoxType type, int hitGroupIndex, HitDefinition hit, DMVector[] offsets, DMVector[] sizes, bool[] active, DMVector[] bonePositions)
     {
         Id = id;
         Type = type;
         HitGroupIndex = hitGroupIndex;
+        Hit = hit;
         this.offsets = offsets;
         this.sizes = sizes;
         this.active = active;
